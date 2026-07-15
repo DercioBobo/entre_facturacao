@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "creation": "2026-07-15 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "signature_section",
+  "enable_signature_on_print"
+ ],
+ "fields": [
+  {
+   "fieldname": "signature_section",
+   "fieldtype": "Section Break",
+   "label": "Signature"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, users can choose to print their signature (set up under User Signature) on the Sales Invoice.",
+   "fieldname": "enable_signature_on_print",
+   "fieldtype": "Check",
+   "label": "Enable Signature on Sales Invoice Print"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-07-15 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "Facturacao Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

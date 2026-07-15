@@ -1,0 +1,25 @@
+[
+ {
+  "collapsible": 1,
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "custom_signature_section",
+  "fieldtype": "Section Break",
+  "insert_after": "letter_head",
+  "label": "Signature",
+  "name": "Sales Invoice-custom_signature_section"
+ },
+ {
+  "allow_on_submit": 1,
+  "default": "1",
+  "depends_on": "eval:frappe.boot.entre_facturacao_settings && frappe.boot.entre_facturacao_settings.enable_signature_on_print",
+  "description": "Print the signature of the user who created this invoice.",
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "custom_print_signature",
+  "fieldtype": "Check",
+  "insert_after": "custom_signature_section",
+  "label": "Print Signature",
+  "name": "Sales Invoice-custom_print_signature"
+ }
+]
