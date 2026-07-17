@@ -96,6 +96,11 @@ class MonitorFacturas {
 						<button class="btn btn-primary btn-sm" id="mf-search">${__("Pesquisar")}</button>
 						<button class="btn btn-default btn-sm"  id="mf-clear">${__("Limpar")}</button>
 					</div>
+					<div class="mf-fg mf-fg--btns mf-fg--export">
+						<button class="btn btn-default btn-sm" id="mf-print" title="${__("Imprimir")}">${__("Imprimir")}</button>
+						<button class="btn btn-default btn-sm" id="mf-export-xlsx" title="${__("Exportar Excel")}">${__("Excel")}</button>
+						<button class="btn btn-default btn-sm" id="mf-export-pdf" title="${__("Exportar PDF")}">${__("PDF")}</button>
+					</div>
 				</div>
 			</div>
 
@@ -166,8 +171,25 @@ class MonitorFacturas {
 			this.$body.find("#mf-month").val("");
 			this.search();
 		});
+		this.$body.find("#mf-print").on("click", () => window.print());
+		this.$body.find("#mf-export-xlsx").on("click", () =>
+			this._export("entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_invoices_xlsx", this._get_filters())
+		);
+		this.$body.find("#mf-export-pdf").on("click", () =>
+			this._export("entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_invoices_pdf", this._get_filters())
+		);
 
 		this.search();
+	}
+
+	_get_filters() {
+		return {
+			from_date: this.$body.find("#mf-from").val() || "",
+			to_date: this.$body.find("#mf-to").val() || "",
+			customer: this.customer_control.get_value() || "",
+			status: this.$body.find("#mf-status").val() || "",
+			include_drafts: this.$body.find("#mf-include-drafts").is(":checked") ? 1 : 0,
+		};
 	}
 
 	async search() {
@@ -175,13 +197,7 @@ class MonitorFacturas {
 		try {
 			const r = await frappe.call({
 				method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_invoices",
-				args: {
-					from_date: this.$body.find("#mf-from").val() || null,
-					to_date: this.$body.find("#mf-to").val() || null,
-					customer: this.customer_control.get_value() || null,
-					status: this.$body.find("#mf-status").val() || null,
-					include_drafts: this.$body.find("#mf-include-drafts").is(":checked") ? 1 : 0,
-				},
+				args: this._get_filters(),
 			});
 			if (r.message) this._render(r.message);
 		} finally {
@@ -300,6 +316,11 @@ class MonitorFacturas {
 						<button class="btn btn-primary btn-sm" id="mf-up-search">${__("Pesquisar")}</button>
 						<button class="btn btn-default btn-sm"  id="mf-up-clear">${__("Limpar")}</button>
 					</div>
+					<div class="mf-fg mf-fg--btns mf-fg--export">
+						<button class="btn btn-default btn-sm" id="mf-up-print" title="${__("Imprimir")}">${__("Imprimir")}</button>
+						<button class="btn btn-default btn-sm" id="mf-up-export-xlsx" title="${__("Exportar Excel")}">${__("Excel")}</button>
+						<button class="btn btn-default btn-sm" id="mf-up-export-pdf" title="${__("Exportar PDF")}">${__("PDF")}</button>
+					</div>
 				</div>
 			</div>
 
@@ -365,6 +386,28 @@ class MonitorFacturas {
 			this.$body.find("#mf-up-month").val("");
 			this.search_upcoming();
 		});
+		this.$body.find("#mf-up-print").on("click", () => window.print());
+		this.$body.find("#mf-up-export-xlsx").on("click", () =>
+			this._export(
+				"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_upcoming_xlsx",
+				this._get_upcoming_filters()
+			)
+		);
+		this.$body.find("#mf-up-export-pdf").on("click", () =>
+			this._export(
+				"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_upcoming_pdf",
+				this._get_upcoming_filters()
+			)
+		);
+	}
+
+	_get_upcoming_filters() {
+		return {
+			from_date: this.$body.find("#mf-up-from").val() || "",
+			to_date: this.$body.find("#mf-up-to").val() || "",
+			customer: this.upcoming_customer_control.get_value() || "",
+			status: this.$body.find("#mf-up-status").val() || "",
+		};
 	}
 
 	async search_upcoming() {
@@ -372,12 +415,7 @@ class MonitorFacturas {
 		try {
 			const r = await frappe.call({
 				method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_upcoming_invoices",
-				args: {
-					from_date: this.$body.find("#mf-up-from").val() || null,
-					to_date: this.$body.find("#mf-up-to").val() || null,
-					customer: this.upcoming_customer_control.get_value() || null,
-					status: this.$body.find("#mf-up-status").val() || null,
-				},
+				args: this._get_upcoming_filters(),
 			});
 			if (r.message) this._render_upcoming(r.message);
 		} finally {
@@ -455,6 +493,11 @@ class MonitorFacturas {
 		this.$body.find(from_sel).val(first);
 		this.$body.find(to_sel).val(last);
 	}
+
+	_export(method, filters) {
+		const params = new URLSearchParams(filters);
+		window.open(`/api/method/${method}?${params.toString()}`, "_blank");
+	}
 }
 
 function _mf_styles() {
@@ -479,6 +522,7 @@ function _mf_styles() {
 .mf-fg--grow { flex: 1; min-width: 200px; }
 .mf-fg--btns { flex-direction: row; gap: 6px; align-items: flex-end; min-width: unset; }
 .mf-fg--chk { justify-content: flex-end; min-width: unset; }
+.mf-fg--export { padding-left: 10px; border-left: 1px solid var(--border-color); }
 .mf-chk { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-color);
 	font-weight: 500; cursor: pointer; white-space: nowrap; height: 32px; }
 .mf-chk input { cursor: pointer; }
@@ -529,6 +573,16 @@ function _mf_styles() {
 .mf-ref-link { color: var(--text-color); text-decoration: none; }
 .mf-ref-link:hover { color: var(--primary); text-decoration: underline; }
 .mf-empty { text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; }
+
+/* ── Print ─── */
+@media print {
+	.navbar, .page-head, .page-actions, .standard-sidebar, .body-sidebar,
+	.mf-tabs, .mf-filters { display: none !important; }
+	.mf-wrap { padding: 0; }
+	.mf-tbl th:last-child, .mf-tbl td:last-child { display: none; }
+	.mf-summary { break-inside: avoid; }
+	.mf-tbl-wrap { border: none; }
+}
 	`;
 	document.head.appendChild(s);
 }

@@ -1,14 +1,22 @@
+from html import escape as html_escape
+
 import frappe
 from frappe import _
-from frappe.utils import cint, getdate, today
+from frappe.utils import cint, flt, formatdate, getdate, now_datetime, today
+from frappe.utils.pdf import get_pdf
+from frappe.utils.xlsxutils import make_xlsx
+
+FREQ_LABELS = {
+	"Daily": "Diária",
+	"Weekly": "Semanal",
+	"Monthly": "Mensal",
+	"Quarterly": "Trimestral",
+	"Half-yearly": "Semestral",
+	"Yearly": "Anual",
+}
 
 
-@frappe.whitelist()
-def get_invoices(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
-	"""Return filtered Sales Invoice rows and summary stats."""
-	if not frappe.has_permission("Sales Invoice", "read"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-
+def _query_invoices(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
 	conditions = ["si.is_return = 0"]
 	params = {}
 
@@ -79,33 +87,19 @@ def get_invoices(from_date=None, to_date=None, customer=None, status=None, inclu
 		r.paid = 0.0
 
 	overdue_rows = [r for r in posted_rows if r.display_status == "Vencida"]
-	total_invoiced = sum(float(r.grand_total or 0) for r in posted_rows)
-	total_paid = sum(r.paid for r in posted_rows)
-	total_outstanding = sum(float(r.outstanding_amount or 0) for r in posted_rows)
-	total_overdue = sum(float(r.outstanding_amount or 0) for r in overdue_rows)
-
-	return {
-		"rows": rows,
-		"summary": {
-			"count": len(posted_rows),
-			"draft_count": len(draft_rows),
-			"total_invoiced": round(total_invoiced, 2),
-			"total_paid": round(total_paid, 2),
-			"total_outstanding": round(total_outstanding, 2),
-			"total_overdue": round(total_overdue, 2),
-			"overdue_count": len(overdue_rows),
-		},
+	summary = {
+		"count": len(posted_rows),
+		"draft_count": len(draft_rows),
+		"total_invoiced": round(sum(float(r.grand_total or 0) for r in posted_rows), 2),
+		"total_paid": round(sum(r.paid for r in posted_rows), 2),
+		"total_outstanding": round(sum(float(r.outstanding_amount or 0) for r in posted_rows), 2),
+		"total_overdue": round(sum(float(r.outstanding_amount or 0) for r in overdue_rows), 2),
+		"overdue_count": len(overdue_rows),
 	}
+	return rows, summary
 
 
-@frappe.whitelist()
-def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=None):
-	"""Return upcoming Auto Repeat-generated Sales Invoices and summary stats."""
-	if not frappe.has_permission("Sales Invoice", "read"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	if not frappe.has_permission("Auto Repeat", "read"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-
+def _query_upcoming(from_date=None, to_date=None, customer=None, status=None):
 	conditions = ["ar.reference_doctype = 'Sales Invoice'", "ar.docstatus = 1"]
 	params = {}
 
@@ -165,11 +159,171 @@ def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=No
 	total_expected = sum(float(r.grand_total or 0) for r in rows)
 	next_dates = [getdate(r.next_schedule_date) for r in rows if r.next_schedule_date]
 
-	return {
-		"rows": rows,
-		"summary": {
-			"count": len(rows),
-			"total_expected": round(total_expected, 2),
-			"next_date": min(next_dates).isoformat() if next_dates else None,
-		},
+	summary = {
+		"count": len(rows),
+		"total_expected": round(total_expected, 2),
+		"next_date": min(next_dates).isoformat() if next_dates else None,
 	}
+	return rows, summary
+
+
+@frappe.whitelist()
+def get_invoices(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
+	"""Return filtered Sales Invoice rows and summary stats."""
+	if not frappe.has_permission("Sales Invoice", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	rows, summary = _query_invoices(from_date, to_date, customer, status, include_drafts)
+	return {"rows": rows, "summary": summary}
+
+
+@frappe.whitelist()
+def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=None):
+	"""Return upcoming Auto Repeat-generated Sales Invoices and summary stats."""
+	if not frappe.has_permission("Sales Invoice", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not frappe.has_permission("Auto Repeat", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	rows, summary = _query_upcoming(from_date, to_date, customer, status)
+	return {"rows": rows, "summary": summary}
+
+
+# ───────────────────────────── Exports ─────────────────────────────
+
+INVOICE_HEADERS = ["Cliente", "Nº Factura", "Emissão", "Vencimento", "Total", "Pago", "Em Dívida", "Estado"]
+UPCOMING_HEADERS = ["Cliente", "Factura de Referência", "Próxima Data", "Frequência", "Valor Esperado", "Estado"]
+
+
+def _invoice_table(rows):
+	data = [[_(h) for h in INVOICE_HEADERS]]
+	for r in rows:
+		data.append(
+			[
+				r.customer_name or r.customer,
+				r.invoice,
+				formatdate(r.posting_date),
+				formatdate(r.due_date) if r.due_date else "",
+				flt(r.grand_total, 2),
+				flt(r.paid, 2),
+				flt(r.outstanding_amount, 2),
+				_(r.display_status),
+			]
+		)
+	data.append(
+		[
+			_("Total"),
+			"",
+			"",
+			"",
+			flt(sum(flt(r.grand_total) for r in rows), 2),
+			flt(sum(flt(r.paid) for r in rows), 2),
+			flt(sum(flt(r.outstanding_amount) for r in rows), 2),
+			"",
+		]
+	)
+	return data
+
+
+def _upcoming_table(rows):
+	data = [[_(h) for h in UPCOMING_HEADERS]]
+	for r in rows:
+		data.append(
+			[
+				r.customer_name or r.customer,
+				r.invoice_ref,
+				formatdate(r.next_schedule_date) if r.next_schedule_date else "",
+				_(FREQ_LABELS.get(r.frequency, r.frequency or "")),
+				flt(r.grand_total, 2),
+				_(r.display_status),
+			]
+		)
+	data.append([_("Total"), "", "", "", flt(sum(flt(r.grand_total) for r in rows), 2), ""])
+	return data
+
+
+def _html_page(title, headers, body_rows, right_align_cols=()):
+	head_html = "".join(f"<th>{html_escape(str(h))}</th>" for h in headers)
+
+	def _row_html(cells, is_total=False):
+		tds = []
+		for i, cell in enumerate(cells):
+			style = "text-align:right" if i in right_align_cols else ""
+			tds.append(f'<td style="{style}">{html_escape(str(cell))}</td>')
+		cls = ' class="total-row"' if is_total else ""
+		return f"<tr{cls}>{''.join(tds)}</tr>"
+
+	rows_html = "".join(_row_html(row, is_total=(i == len(body_rows) - 1)) for i, row in enumerate(body_rows))
+
+	return f"""
+	<html>
+	<head>
+		<meta charset="utf-8">
+		<style>
+			body {{ font-family: Arial, sans-serif; font-size: 11px; color: #111; }}
+			h2 {{ margin: 0 0 4px 0; }}
+			.meta {{ color: #666; margin-bottom: 14px; }}
+			table {{ width: 100%; border-collapse: collapse; }}
+			th, td {{ border: 1px solid #ccc; padding: 5px 8px; }}
+			th {{ background: #f3f4f6; text-align: left; }}
+			.total-row td {{ font-weight: bold; background: #f9fafb; }}
+		</style>
+	</head>
+	<body>
+		<h2>{html_escape(title)}</h2>
+		<div class="meta">{now_datetime().strftime("%d-%m-%Y %H:%M")}</div>
+		<table>
+			<thead><tr>{head_html}</tr></thead>
+			<tbody>{rows_html}</tbody>
+		</table>
+	</body>
+	</html>
+	"""
+
+
+@frappe.whitelist()
+def export_invoices_xlsx(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
+	if not frappe.has_permission("Sales Invoice", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	rows, _summary = _query_invoices(from_date, to_date, customer, status, include_drafts)
+	xlsx_file = make_xlsx(_invoice_table(rows), "Monitor de Facturas")
+	frappe.response["filename"] = "monitor-facturas.xlsx"
+	frappe.response["filecontent"] = xlsx_file.getvalue()
+	frappe.response["type"] = "binary"
+
+
+@frappe.whitelist()
+def export_invoices_pdf(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
+	if not frappe.has_permission("Sales Invoice", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	rows, _summary = _query_invoices(from_date, to_date, customer, status, include_drafts)
+	table = _invoice_table(rows)
+	html = _html_page(_("Monitor de Facturas"), table[0], table[1:], right_align_cols=(4, 5, 6))
+	frappe.response["filename"] = "monitor-facturas.pdf"
+	frappe.response["filecontent"] = get_pdf(html)
+	frappe.response["type"] = "pdf"
+
+
+@frappe.whitelist()
+def export_upcoming_xlsx(from_date=None, to_date=None, customer=None, status=None):
+	if not frappe.has_permission("Sales Invoice", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not frappe.has_permission("Auto Repeat", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	rows, _summary = _query_upcoming(from_date, to_date, customer, status)
+	xlsx_file = make_xlsx(_upcoming_table(rows), "Proximas Facturas")
+	frappe.response["filename"] = "proximas-facturas.xlsx"
+	frappe.response["filecontent"] = xlsx_file.getvalue()
+	frappe.response["type"] = "binary"
+
+
+@frappe.whitelist()
+def export_upcoming_pdf(from_date=None, to_date=None, customer=None, status=None):
+	if not frappe.has_permission("Sales Invoice", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not frappe.has_permission("Auto Repeat", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	rows, _summary = _query_upcoming(from_date, to_date, customer, status)
+	table = _upcoming_table(rows)
+	html = _html_page(_("Próximas Facturas"), table[0], table[1:], right_align_cols=(4,))
+	frappe.response["filename"] = "proximas-facturas.pdf"
+	frappe.response["filecontent"] = get_pdf(html)
+	frappe.response["type"] = "pdf"
