@@ -518,23 +518,27 @@ function _mf_styles() {
 .mf-filters { background: var(--fg-color); border: 1px solid var(--border-color);
 	border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
 .mf-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
-.mf-fg { display: flex; flex-direction: column; gap: 4px; min-width: 110px; }
+.mf-fg { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px;
+	min-width: 110px; min-height: 54px; }
 .mf-fg--grow { flex: 1; min-width: 200px; }
 .mf-fg--btns { flex-direction: row; gap: 6px; align-items: flex-end; min-width: unset; }
-.mf-fg--chk { justify-content: flex-end; min-width: unset; }
+.mf-fg--chk { min-width: unset; }
 .mf-fg--export { padding-left: 10px; border-left: 1px solid var(--border-color); }
 .mf-chk { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-color);
-	font-weight: 500; cursor: pointer; white-space: nowrap; height: 32px; }
+	font-weight: 500; cursor: pointer; white-space: nowrap; height: 32px; box-sizing: border-box; }
 .mf-chk input { cursor: pointer; }
 .mf-fg label { font-size: 11px; font-weight: 600; color: var(--text-muted);
-	text-transform: uppercase; letter-spacing: .5px; }
-.mf-fg select, .mf-fg input[type=text], .mf-fg input[type=date], .mf-fg input[type=month] {
-	height: 32px; padding: 0 9px; border: 1.5px solid var(--border-color);
-	border-radius: 6px; font-size: 13px; background: var(--fg-color);
-	color: var(--text-color); outline: none; transition: border-color .15s; }
-.mf-fg select:focus, .mf-fg input:focus { border-color: var(--primary); }
-.mf-fg .form-group { margin-bottom: 0; }
-.mf-fg label.control-label { display: none; }
+	text-transform: uppercase; letter-spacing: .5px; line-height: 1; }
+.mf-fg select, .mf-fg input[type=text], .mf-fg input[type=date], .mf-fg input[type=month],
+.mf-fg .form-control {
+	height: 32px !important; line-height: 30px; padding: 0 9px !important;
+	border: 1.5px solid var(--border-color) !important; border-radius: 6px;
+	font-size: 13px; background: var(--fg-color); color: var(--text-color);
+	outline: none; box-sizing: border-box; transition: border-color .15s; margin: 0 !important; }
+.mf-fg select:focus, .mf-fg input:focus, .mf-fg .form-control:focus { border-color: var(--primary); }
+.mf-fg .form-group { margin-bottom: 0 !important; }
+.mf-fg label.control-label { display: none !important; }
+.mf-fg .help-box, .mf-fg .control-value, .mf-fg small.form-text { display: none !important; }
 
 /* ── Summary cards ─── */
 .mf-summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
