@@ -2,7 +2,7 @@ from html import escape as html_escape
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, formatdate, getdate, now_datetime, today
+from frappe.utils import flt, formatdate, getdate, now_datetime, today
 from frappe.utils.pdf import get_pdf
 from frappe.utils.xlsxutils import make_xlsx
 
@@ -16,7 +16,7 @@ FREQ_LABELS = {
 }
 
 
-def _query_invoices(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
+def _query_invoices(from_date=None, to_date=None, customer=None, status=None):
 	conditions = ["si.is_return = 0"]
 	params = {}
 
@@ -41,8 +41,6 @@ def _query_invoices(from_date=None, to_date=None, customer=None, status=None, in
 		params["today_val"] = today_val
 	elif status == "Rascunho":
 		conditions.append("si.docstatus = 0")
-	elif cint(include_drafts):
-		conditions.append("si.docstatus IN (0, 1)")
 	else:
 		conditions.append("si.docstatus = 1")
 
@@ -168,11 +166,11 @@ def _query_upcoming(from_date=None, to_date=None, customer=None, status=None):
 
 
 @frappe.whitelist()
-def get_invoices(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
+def get_invoices(from_date=None, to_date=None, customer=None, status=None):
 	"""Return filtered Sales Invoice rows and summary stats."""
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, summary = _query_invoices(from_date, to_date, customer, status, include_drafts)
+	rows, summary = _query_invoices(from_date, to_date, customer, status)
 	return {"rows": rows, "summary": summary}
 
 
@@ -280,10 +278,10 @@ def _html_page(title, headers, body_rows, right_align_cols=()):
 
 
 @frappe.whitelist()
-def export_invoices_xlsx(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
+def export_invoices_xlsx(from_date=None, to_date=None, customer=None, status=None):
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, _summary = _query_invoices(from_date, to_date, customer, status, include_drafts)
+	rows, _summary = _query_invoices(from_date, to_date, customer, status)
 	xlsx_file = make_xlsx(_invoice_table(rows), "Monitor de Facturas")
 	frappe.response["filename"] = "monitor-facturas.xlsx"
 	frappe.response["filecontent"] = xlsx_file.getvalue()
@@ -291,10 +289,10 @@ def export_invoices_xlsx(from_date=None, to_date=None, customer=None, status=Non
 
 
 @frappe.whitelist()
-def export_invoices_pdf(from_date=None, to_date=None, customer=None, status=None, include_drafts=0):
+def export_invoices_pdf(from_date=None, to_date=None, customer=None, status=None):
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, _summary = _query_invoices(from_date, to_date, customer, status, include_drafts)
+	rows, _summary = _query_invoices(from_date, to_date, customer, status)
 	table = _invoice_table(rows)
 	html = _html_page(_("Monitor de Facturas"), table[0], table[1:], right_align_cols=(4, 5, 6))
 	frappe.response["filename"] = "monitor-facturas.pdf"

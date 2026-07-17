@@ -86,20 +86,19 @@ class MonitorFacturas {
 							<option value="Rascunho">${__("Rascunho")}</option>
 						</select>
 					</div>
-					<div class="mf-fg mf-fg--chk">
-						<label class="mf-chk">
-							<input type="checkbox" id="mf-include-drafts">
-							${__("Incluir rascunhos")}
-						</label>
-					</div>
 					<div class="mf-fg mf-fg--btns">
 						<button class="btn btn-primary btn-sm" id="mf-search">${__("Pesquisar")}</button>
 						<button class="btn btn-default btn-sm"  id="mf-clear">${__("Limpar")}</button>
-					</div>
-					<div class="mf-fg mf-fg--btns mf-fg--export">
-						<button class="btn btn-default btn-sm" id="mf-print" title="${__("Imprimir")}">${__("Imprimir")}</button>
-						<button class="btn btn-default btn-sm" id="mf-export-xlsx" title="${__("Exportar Excel")}">${__("Excel")}</button>
-						<button class="btn btn-default btn-sm" id="mf-export-pdf" title="${__("Exportar PDF")}">${__("PDF")}</button>
+						<div class="dropdown">
+							<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								${__("Ações")}
+							</button>
+							<div class="dropdown-menu dropdown-menu-right">
+								<a class="dropdown-item" href="#" id="mf-print">${__("Imprimir")}</a>
+								<a class="dropdown-item" href="#" id="mf-export-xlsx">${__("Exportar Excel")}</a>
+								<a class="dropdown-item" href="#" id="mf-export-pdf">${__("Exportar PDF")}</a>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -162,7 +161,7 @@ class MonitorFacturas {
 
 		this.$body.find("#mf-search").on("click", () => this.search());
 		this.$body.find("#mf-clear").on("click", () => this._clear());
-		this.$body.find("#mf-status, #mf-include-drafts").on("change", () => this.search());
+		this.$body.find("#mf-status").on("change", () => this.search());
 		this.$body.find("#mf-month").on("change", (e) => {
 			this._apply_month(e.target.value, "#mf-from", "#mf-to");
 			this.search();
@@ -171,13 +170,18 @@ class MonitorFacturas {
 			this.$body.find("#mf-month").val("");
 			this.search();
 		});
-		this.$body.find("#mf-print").on("click", () => window.print());
-		this.$body.find("#mf-export-xlsx").on("click", () =>
-			this._export("entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_invoices_xlsx", this._get_filters())
-		);
-		this.$body.find("#mf-export-pdf").on("click", () =>
-			this._export("entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_invoices_pdf", this._get_filters())
-		);
+		this.$body.find("#mf-print").on("click", (e) => {
+			e.preventDefault();
+			window.print();
+		});
+		this.$body.find("#mf-export-xlsx").on("click", (e) => {
+			e.preventDefault();
+			this._export("entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_invoices_xlsx", this._get_filters());
+		});
+		this.$body.find("#mf-export-pdf").on("click", (e) => {
+			e.preventDefault();
+			this._export("entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_invoices_pdf", this._get_filters());
+		});
 
 		this.search();
 	}
@@ -188,7 +192,6 @@ class MonitorFacturas {
 			to_date: this.$body.find("#mf-to").val() || "",
 			customer: this.customer_control.get_value() || "",
 			status: this.$body.find("#mf-status").val() || "",
-			include_drafts: this.$body.find("#mf-include-drafts").is(":checked") ? 1 : 0,
 		};
 	}
 
@@ -275,7 +278,6 @@ class MonitorFacturas {
 	_clear() {
 		this.$body.find("#mf-status").val("");
 		this.$body.find("#mf-month, #mf-from, #mf-to").val("");
-		this.$body.find("#mf-include-drafts").prop("checked", false);
 		this.customer_control.set_value("");
 		this.$body.find("#mf-summary, #mf-tbl-wrap, #mf-empty").hide();
 		this.search();
@@ -315,11 +317,16 @@ class MonitorFacturas {
 					<div class="mf-fg mf-fg--btns">
 						<button class="btn btn-primary btn-sm" id="mf-up-search">${__("Pesquisar")}</button>
 						<button class="btn btn-default btn-sm"  id="mf-up-clear">${__("Limpar")}</button>
-					</div>
-					<div class="mf-fg mf-fg--btns mf-fg--export">
-						<button class="btn btn-default btn-sm" id="mf-up-print" title="${__("Imprimir")}">${__("Imprimir")}</button>
-						<button class="btn btn-default btn-sm" id="mf-up-export-xlsx" title="${__("Exportar Excel")}">${__("Excel")}</button>
-						<button class="btn btn-default btn-sm" id="mf-up-export-pdf" title="${__("Exportar PDF")}">${__("PDF")}</button>
+						<div class="dropdown">
+							<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								${__("Ações")}
+							</button>
+							<div class="dropdown-menu dropdown-menu-right">
+								<a class="dropdown-item" href="#" id="mf-up-print">${__("Imprimir")}</a>
+								<a class="dropdown-item" href="#" id="mf-up-export-xlsx">${__("Exportar Excel")}</a>
+								<a class="dropdown-item" href="#" id="mf-up-export-pdf">${__("Exportar PDF")}</a>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -386,19 +393,24 @@ class MonitorFacturas {
 			this.$body.find("#mf-up-month").val("");
 			this.search_upcoming();
 		});
-		this.$body.find("#mf-up-print").on("click", () => window.print());
-		this.$body.find("#mf-up-export-xlsx").on("click", () =>
+		this.$body.find("#mf-up-print").on("click", (e) => {
+			e.preventDefault();
+			window.print();
+		});
+		this.$body.find("#mf-up-export-xlsx").on("click", (e) => {
+			e.preventDefault();
 			this._export(
 				"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_upcoming_xlsx",
 				this._get_upcoming_filters()
-			)
-		);
-		this.$body.find("#mf-up-export-pdf").on("click", () =>
+			);
+		});
+		this.$body.find("#mf-up-export-pdf").on("click", (e) => {
+			e.preventDefault();
 			this._export(
 				"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_upcoming_pdf",
 				this._get_upcoming_filters()
-			)
-		);
+			);
+		});
 	}
 
 	_get_upcoming_filters() {
@@ -522,11 +534,6 @@ function _mf_styles() {
 	min-width: 110px; min-height: 54px; }
 .mf-fg--grow { flex: 1; min-width: 200px; }
 .mf-fg--btns { flex-direction: row; gap: 6px; align-items: flex-end; min-width: unset; }
-.mf-fg--chk { min-width: unset; }
-.mf-fg--export { padding-left: 10px; border-left: 1px solid var(--border-color); }
-.mf-chk { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-color);
-	font-weight: 500; cursor: pointer; white-space: nowrap; height: 32px; box-sizing: border-box; }
-.mf-chk input { cursor: pointer; }
 .mf-fg label { font-size: 11px; font-weight: 600; color: var(--text-muted);
 	text-transform: uppercase; letter-spacing: .5px; line-height: 1; }
 .mf-fg select, .mf-fg input[type=text], .mf-fg input[type=date], .mf-fg input[type=month],
