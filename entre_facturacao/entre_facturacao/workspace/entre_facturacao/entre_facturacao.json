@@ -33,6 +33,30 @@
    "link_count": 0,
    "idx": 2,
    "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "Extrato de Cliente",
+   "link_type": "Report",
+   "link_to": "Extrato de Cliente",
+   "is_query_report": 1,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "idx": 3,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
+   "label": "Extrato da Factura",
+   "link_type": "Report",
+   "link_to": "Extrato da Factura",
+   "is_query_report": 1,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "idx": 4,
+   "doctype": "Workspace Link"
   }
  ],
  "modified": "2026-07-16 00:00:00.000000",

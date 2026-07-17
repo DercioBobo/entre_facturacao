@@ -270,7 +270,10 @@ class MonitorFacturas {
 				<td class="mf-r">${format_currency(r.paid)}</td>
 				<td class="mf-r">${format_currency(r.outstanding_amount)}</td>
 				<td><span class="mf-b ${BADGE[r.display_status] || ""}">${r.display_status}</span></td>
-				<td><a href="/app/sales-invoice/${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Abrir factura")}">↗</a></td>
+				<td>
+					<a href="/app/sales-invoice/${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Abrir factura")}">↗</a>
+					<a href="/app/query-report/Extrato%20da%20Factura?factura=${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Extrato da Factura")}">Σ</a>
+				</td>
 			</tr>`
 			)
 			.join("");
@@ -692,6 +695,7 @@ function _mf_styles() {
 .mf-b--grey   { background: #e5e7eb; color: #374151; }
 .mf-link { font-size: 15px; color: var(--text-muted); text-decoration: none; }
 .mf-link:hover { color: var(--primary); }
+.mf-link + .mf-link { margin-left: 8px; }
 .mf-ref-link { color: var(--text-color); text-decoration: none; }
 .mf-ref-link:hover { color: var(--primary); text-decoration: underline; }
 .mf-empty { text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; }
