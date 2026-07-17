@@ -1,0 +1,20 @@
+{
+ "content": "1",
+ "creation": "2026-07-16 00:00:00.000000",
+ "doctype": "Page",
+ "modified": "2026-07-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "monitor-facturas",
+ "owner": "Administrator",
+ "page_name": "monitor-facturas",
+ "restrict_to_domain": "",
+ "roles": [
+  {"role": "Accounts Manager"},
+  {"role": "Accounts User"},
+  {"role": "Sales Manager"},
+  {"role": "Sales User"}
+ ],
+ "system_page": 0,
+ "title": "Monitor de Facturas"
+}

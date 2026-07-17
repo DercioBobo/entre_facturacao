@@ -17,6 +17,14 @@ jinja = {
     ],
 }
 
+permission_query_conditions = {
+    "User Signature": "entre_facturacao.entre_facturacao.doctype.user_signature.user_signature.get_permission_query_conditions",
+}
+
+has_permission = {
+    "User Signature": "entre_facturacao.entre_facturacao.doctype.user_signature.user_signature.has_permission",
+}
+
 fixtures = [
     {
         "doctype": "Custom Field",
