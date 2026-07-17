@@ -2,7 +2,7 @@ from html import escape as html_escape
 
 import frappe
 from frappe import _
-from frappe.utils import flt, formatdate, getdate, now_datetime, today
+from frappe.utils import cint, flt, formatdate, getdate, now_datetime, today
 from frappe.utils.pdf import get_pdf
 from frappe.utils.xlsxutils import make_xlsx
 
@@ -16,10 +16,13 @@ FREQ_LABELS = {
 }
 
 
-def _query_invoices(from_date=None, to_date=None, customer=None, status=None):
+def _query_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
 	conditions = ["si.is_return = 0"]
 	params = {}
 
+	if company:
+		conditions.append("si.company = %(company)s")
+		params["company"] = company
 	if from_date:
 		conditions.append("si.posting_date >= %(from_date)s")
 		params["from_date"] = from_date
@@ -97,10 +100,13 @@ def _query_invoices(from_date=None, to_date=None, customer=None, status=None):
 	return rows, summary
 
 
-def _query_upcoming(from_date=None, to_date=None, customer=None, status=None):
+def _query_upcoming(from_date=None, to_date=None, customer=None, status=None, company=None):
 	conditions = ["ar.reference_doctype = 'Sales Invoice'", "ar.docstatus = 1"]
 	params = {}
 
+	if company:
+		conditions.append("si.company = %(company)s")
+		params["company"] = company
 	if from_date:
 		conditions.append("ar.next_schedule_date >= %(from_date)s")
 		params["from_date"] = from_date
@@ -166,22 +172,22 @@ def _query_upcoming(from_date=None, to_date=None, customer=None, status=None):
 
 
 @frappe.whitelist()
-def get_invoices(from_date=None, to_date=None, customer=None, status=None):
+def get_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
 	"""Return filtered Sales Invoice rows and summary stats."""
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, summary = _query_invoices(from_date, to_date, customer, status)
+	rows, summary = _query_invoices(from_date, to_date, customer, status, company)
 	return {"rows": rows, "summary": summary}
 
 
 @frappe.whitelist()
-def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=None):
+def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
 	"""Return upcoming Auto Repeat-generated Sales Invoices and summary stats."""
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	if not frappe.has_permission("Auto Repeat", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, summary = _query_upcoming(from_date, to_date, customer, status)
+	rows, summary = _query_upcoming(from_date, to_date, customer, status, company)
 	return {"rows": rows, "summary": summary}
 
 
@@ -238,7 +244,32 @@ def _upcoming_table(rows):
 	return data
 
 
-def _html_page(title, headers, body_rows, right_align_cols=()):
+def _pdf_options(orientation=None):
+	if orientation in ("Portrait", "Landscape"):
+		return {"orientation": orientation}
+	return None
+
+
+def _get_letterhead_html(letter_head=None):
+	name = letter_head or frappe.db.get_value("Letter Head", {"is_default": 1, "disabled": 0}, "name")
+	if not name:
+		return ""
+	doc = frappe.get_cached_doc("Letter Head", name)
+	if getattr(doc, "content", None):
+		return doc.content
+	if getattr(doc, "image", None):
+		return f'<img src="{doc.image}" style="max-height:120px;">'
+	return ""
+
+
+@frappe.whitelist()
+def get_letterhead_html(letter_head=None):
+	if not frappe.has_permission("Letter Head", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	return _get_letterhead_html(letter_head)
+
+
+def _html_page(title, headers, body_rows, right_align_cols=(), letterhead_html=""):
 	head_html = "".join(f"<th>{html_escape(str(h))}</th>" for h in headers)
 
 	def _row_html(cells, is_total=False):
@@ -250,6 +281,7 @@ def _html_page(title, headers, body_rows, right_align_cols=()):
 		return f"<tr{cls}>{''.join(tds)}</tr>"
 
 	rows_html = "".join(_row_html(row, is_total=(i == len(body_rows) - 1)) for i, row in enumerate(body_rows))
+	letterhead_block = f'<div class="letterhead">{letterhead_html}</div>' if letterhead_html else ""
 
 	return f"""
 	<html>
@@ -257,6 +289,7 @@ def _html_page(title, headers, body_rows, right_align_cols=()):
 		<meta charset="utf-8">
 		<style>
 			body {{ font-family: Arial, sans-serif; font-size: 11px; color: #111; }}
+			.letterhead {{ margin-bottom: 14px; }}
 			h2 {{ margin: 0 0 4px 0; }}
 			.meta {{ color: #666; margin-bottom: 14px; }}
 			table {{ width: 100%; border-collapse: collapse; }}
@@ -266,6 +299,7 @@ def _html_page(title, headers, body_rows, right_align_cols=()):
 		</style>
 	</head>
 	<body>
+		{letterhead_block}
 		<h2>{html_escape(title)}</h2>
 		<div class="meta">{now_datetime().strftime("%d-%m-%Y %H:%M")}</div>
 		<table>
@@ -278,10 +312,10 @@ def _html_page(title, headers, body_rows, right_align_cols=()):
 
 
 @frappe.whitelist()
-def export_invoices_xlsx(from_date=None, to_date=None, customer=None, status=None):
+def export_invoices_xlsx(from_date=None, to_date=None, customer=None, status=None, company=None):
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, _summary = _query_invoices(from_date, to_date, customer, status)
+	rows, _summary = _query_invoices(from_date, to_date, customer, status, company)
 	xlsx_file = make_xlsx(_invoice_table(rows), "Monitor de Facturas")
 	frappe.response["filename"] = "monitor-facturas.xlsx"
 	frappe.response["filecontent"] = xlsx_file.getvalue()
@@ -289,24 +323,36 @@ def export_invoices_xlsx(from_date=None, to_date=None, customer=None, status=Non
 
 
 @frappe.whitelist()
-def export_invoices_pdf(from_date=None, to_date=None, customer=None, status=None):
+def export_invoices_pdf(
+	from_date=None,
+	to_date=None,
+	customer=None,
+	status=None,
+	company=None,
+	with_letterhead=0,
+	letter_head=None,
+	orientation=None,
+):
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, _summary = _query_invoices(from_date, to_date, customer, status)
+	rows, _summary = _query_invoices(from_date, to_date, customer, status, company)
 	table = _invoice_table(rows)
-	html = _html_page(_("Monitor de Facturas"), table[0], table[1:], right_align_cols=(4, 5, 6))
+	letterhead_html = _get_letterhead_html(letter_head) if cint(with_letterhead) else ""
+	html = _html_page(
+		_("Monitor de Facturas"), table[0], table[1:], right_align_cols=(4, 5, 6), letterhead_html=letterhead_html
+	)
 	frappe.response["filename"] = "monitor-facturas.pdf"
-	frappe.response["filecontent"] = get_pdf(html)
+	frappe.response["filecontent"] = get_pdf(html, options=_pdf_options(orientation))
 	frappe.response["type"] = "pdf"
 
 
 @frappe.whitelist()
-def export_upcoming_xlsx(from_date=None, to_date=None, customer=None, status=None):
+def export_upcoming_xlsx(from_date=None, to_date=None, customer=None, status=None, company=None):
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	if not frappe.has_permission("Auto Repeat", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, _summary = _query_upcoming(from_date, to_date, customer, status)
+	rows, _summary = _query_upcoming(from_date, to_date, customer, status, company)
 	xlsx_file = make_xlsx(_upcoming_table(rows), "Proximas Facturas")
 	frappe.response["filename"] = "proximas-facturas.xlsx"
 	frappe.response["filecontent"] = xlsx_file.getvalue()
@@ -314,14 +360,26 @@ def export_upcoming_xlsx(from_date=None, to_date=None, customer=None, status=Non
 
 
 @frappe.whitelist()
-def export_upcoming_pdf(from_date=None, to_date=None, customer=None, status=None):
+def export_upcoming_pdf(
+	from_date=None,
+	to_date=None,
+	customer=None,
+	status=None,
+	company=None,
+	with_letterhead=0,
+	letter_head=None,
+	orientation=None,
+):
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	if not frappe.has_permission("Auto Repeat", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	rows, _summary = _query_upcoming(from_date, to_date, customer, status)
+	rows, _summary = _query_upcoming(from_date, to_date, customer, status, company)
 	table = _upcoming_table(rows)
-	html = _html_page(_("Próximas Facturas"), table[0], table[1:], right_align_cols=(4,))
+	letterhead_html = _get_letterhead_html(letter_head) if cint(with_letterhead) else ""
+	html = _html_page(
+		_("Próximas Facturas"), table[0], table[1:], right_align_cols=(4,), letterhead_html=letterhead_html
+	)
 	frappe.response["filename"] = "proximas-facturas.pdf"
-	frappe.response["filecontent"] = get_pdf(html)
+	frappe.response["filecontent"] = get_pdf(html, options=_pdf_options(orientation))
 	frappe.response["type"] = "pdf"

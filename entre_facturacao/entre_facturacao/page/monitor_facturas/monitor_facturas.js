@@ -61,6 +61,9 @@ class MonitorFacturas {
 		$panel.html(`
 			<div class="mf-filters">
 				<div class="mf-row">
+					<div class="mf-fg" id="mf-company-wrap">
+						<label>${__("Empresa")}</label>
+					</div>
 					<div class="mf-fg mf-fg--grow" id="mf-customer-wrap">
 						<label>${__("Cliente")}</label>
 					</div>
@@ -146,6 +149,19 @@ class MonitorFacturas {
 				${__("Nenhuma factura encontrada.")}
 			</div>`);
 
+		this.company_control = frappe.ui.form.make_control({
+			df: {
+				fieldtype: "Link",
+				fieldname: "company",
+				options: "Company",
+			},
+			parent: this.$body.find("#mf-company-wrap")[0],
+			render_input: true,
+		});
+		this.company_control.refresh();
+		this.company_control.set_value(frappe.defaults.get_default("company") || "");
+		this.company_control.$input.on("change awesomplete-selectcomplete", () => this.search());
+
 		this.customer_control = frappe.ui.form.make_control({
 			df: {
 				fieldtype: "Link",
@@ -172,7 +188,7 @@ class MonitorFacturas {
 		});
 		this.$body.find("#mf-print").on("click", (e) => {
 			e.preventDefault();
-			window.print();
+			this._show_print_options((opts) => this._print(opts));
 		});
 		this.$body.find("#mf-export-xlsx").on("click", (e) => {
 			e.preventDefault();
@@ -180,7 +196,12 @@ class MonitorFacturas {
 		});
 		this.$body.find("#mf-export-pdf").on("click", (e) => {
 			e.preventDefault();
-			this._export("entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_invoices_pdf", this._get_filters());
+			this._show_print_options((opts) =>
+				this._export(
+					"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_invoices_pdf",
+					{ ...this._get_filters(), ...opts }
+				)
+			);
 		});
 
 		this.search();
@@ -188,6 +209,7 @@ class MonitorFacturas {
 
 	_get_filters() {
 		return {
+			company: this.company_control.get_value() || "",
 			from_date: this.$body.find("#mf-from").val() || "",
 			to_date: this.$body.find("#mf-to").val() || "",
 			customer: this.customer_control.get_value() || "",
@@ -290,6 +312,9 @@ class MonitorFacturas {
 		$panel.html(`
 			<div class="mf-filters">
 				<div class="mf-row">
+					<div class="mf-fg" id="mf-up-company-wrap">
+						<label>${__("Empresa")}</label>
+					</div>
 					<div class="mf-fg mf-fg--grow" id="mf-up-customer-wrap">
 						<label>${__("Cliente")}</label>
 					</div>
@@ -367,6 +392,21 @@ class MonitorFacturas {
 				${__("Nenhuma factura futura encontrada.")}
 			</div>`);
 
+		this.upcoming_company_control = frappe.ui.form.make_control({
+			df: {
+				fieldtype: "Link",
+				fieldname: "company",
+				options: "Company",
+			},
+			parent: this.$body.find("#mf-up-company-wrap")[0],
+			render_input: true,
+		});
+		this.upcoming_company_control.refresh();
+		this.upcoming_company_control.set_value(frappe.defaults.get_default("company") || "");
+		this.upcoming_company_control.$input.on("change awesomplete-selectcomplete", () =>
+			this.search_upcoming()
+		);
+
 		this.upcoming_customer_control = frappe.ui.form.make_control({
 			df: {
 				fieldtype: "Link",
@@ -395,7 +435,7 @@ class MonitorFacturas {
 		});
 		this.$body.find("#mf-up-print").on("click", (e) => {
 			e.preventDefault();
-			window.print();
+			this._show_print_options((opts) => this._print(opts));
 		});
 		this.$body.find("#mf-up-export-xlsx").on("click", (e) => {
 			e.preventDefault();
@@ -406,15 +446,18 @@ class MonitorFacturas {
 		});
 		this.$body.find("#mf-up-export-pdf").on("click", (e) => {
 			e.preventDefault();
-			this._export(
-				"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_upcoming_pdf",
-				this._get_upcoming_filters()
+			this._show_print_options((opts) =>
+				this._export(
+					"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_upcoming_pdf",
+					{ ...this._get_upcoming_filters(), ...opts }
+				)
 			);
 		});
 	}
 
 	_get_upcoming_filters() {
 		return {
+			company: this.upcoming_company_control.get_value() || "",
 			from_date: this.$body.find("#mf-up-from").val() || "",
 			to_date: this.$body.find("#mf-up-to").val() || "",
 			customer: this.upcoming_customer_control.get_value() || "",
@@ -510,6 +553,74 @@ class MonitorFacturas {
 		const params = new URLSearchParams(filters);
 		window.open(`/api/method/${method}?${params.toString()}`, "_blank");
 	}
+
+	_show_print_options(callback) {
+		const RETRATO = __("Retrato");
+		const PAISAGEM = __("Paisagem");
+		const dialog = new frappe.ui.Dialog({
+			title: __("Opções de Impressão"),
+			fields: [
+				{
+					fieldtype: "Check",
+					fieldname: "with_letterhead",
+					label: __("Incluir Cabeçalho"),
+					default: 1,
+				},
+				{
+					fieldtype: "Link",
+					fieldname: "letter_head",
+					label: __("Cabeçalho"),
+					options: "Letter Head",
+					depends_on: "with_letterhead",
+					description: __("Deixe em branco para usar o cabeçalho predefinido."),
+				},
+				{
+					fieldtype: "Select",
+					fieldname: "orientation",
+					label: __("Orientação"),
+					options: [RETRATO, PAISAGEM],
+					default: RETRATO,
+				},
+			],
+			primary_action_label: __("Confirmar"),
+			primary_action: (values) => {
+				dialog.hide();
+				callback({
+					with_letterhead: values.with_letterhead ? 1 : 0,
+					letter_head: values.letter_head || "",
+					orientation: values.orientation === PAISAGEM ? "Landscape" : "Portrait",
+				});
+			},
+		});
+		dialog.show();
+	}
+
+	async _print(opts) {
+		let letterhead_html = "";
+		if (opts.with_letterhead) {
+			const r = await frappe.call({
+				method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_letterhead_html",
+				args: { letter_head: opts.letter_head || null },
+			});
+			letterhead_html = r.message || "";
+		}
+
+		const $letterhead = $(`<div class="mf-print-letterhead">${letterhead_html}</div>`);
+		this.$body.find(".mf-wrap").prepend($letterhead);
+
+		const style = document.createElement("style");
+		style.textContent = `@page { size: A4 ${opts.orientation === "Landscape" ? "landscape" : "portrait"}; }`;
+		document.head.appendChild(style);
+
+		const cleanup = () => {
+			$letterhead.remove();
+			style.remove();
+			window.removeEventListener("afterprint", cleanup);
+		};
+		window.addEventListener("afterprint", cleanup);
+
+		window.print();
+	}
 }
 
 function _mf_styles() {
@@ -586,10 +697,12 @@ function _mf_styles() {
 .mf-empty { text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; }
 
 /* ── Print ─── */
+.mf-print-letterhead { display: none; }
 @media print {
 	.navbar, .page-head, .page-actions, .standard-sidebar, .body-sidebar,
 	.mf-tabs, .mf-filters { display: none !important; }
 	.mf-wrap { padding: 0; }
+	.mf-print-letterhead { display: block; margin-bottom: 14px; }
 	.mf-tbl th:last-child, .mf-tbl td:last-child { display: none; }
 	.mf-summary { break-inside: avoid; }
 	.mf-tbl-wrap { border: none; }
