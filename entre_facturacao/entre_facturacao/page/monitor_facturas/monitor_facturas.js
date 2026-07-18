@@ -456,6 +456,28 @@ class MonitorFacturas {
 				)
 			);
 		});
+		this.$body.find("#mf-up-tbody").on("click", ".mf-toggle-btn", (e) => {
+			this._toggle_auto_repeat($(e.currentTarget));
+		});
+	}
+
+	_toggle_auto_repeat($btn) {
+		const auto_repeat = $btn.data("auto-repeat");
+		const next_disabled = cint($btn.data("disabled")) ? 0 : 1;
+		$btn.prop("disabled", true);
+		frappe.call({
+			method: "entre_facturacao.auto_repeat.toggle_auto_repeat",
+			args: { auto_repeat, disabled: next_disabled },
+			callback: (r) => {
+				if (r.message === undefined) return;
+				frappe.show_alert({
+					message: next_disabled ? __("Repetição pausada.") : __("Repetição activada."),
+					indicator: next_disabled ? "orange" : "green",
+				});
+				this.search_upcoming();
+			},
+			always: () => $btn.prop("disabled", false),
+		});
 	}
 
 	_get_upcoming_filters() {
@@ -514,7 +536,14 @@ class MonitorFacturas {
 				<td>${frappe.utils.escape_html(MF_FREQ_LABELS[r.frequency] || r.frequency || "—")}</td>
 				<td class="mf-r">${format_currency(r.grand_total)}</td>
 				<td><span class="mf-b ${BADGE[r.display_status] || ""}">${r.display_status}</span></td>
-				<td><a href="/app/auto-repeat/${encodeURIComponent(r.auto_repeat)}" target="_blank" class="mf-link" title="${__("Abrir repetição automática")}">↗</a></td>
+				<td>
+					<button
+						class="btn btn-default btn-sm mf-toggle-btn"
+						data-auto-repeat="${r.auto_repeat}"
+						data-disabled="${r.disabled ? 1 : 0}"
+					>${r.disabled ? __("Activar") : __("Pausar")}</button>
+					<a href="/app/auto-repeat/${encodeURIComponent(r.auto_repeat)}" target="_blank" class="mf-link" title="${__("Editar repetição automática")}">✎</a>
+				</td>
 			</tr>`
 			)
 			.join("");
@@ -696,6 +725,8 @@ function _mf_styles() {
 .mf-link { font-size: 15px; color: var(--text-muted); text-decoration: none; }
 .mf-link:hover { color: var(--primary); }
 .mf-link + .mf-link { margin-left: 8px; }
+.mf-toggle-btn { font-size: 11px; padding: 2px 9px; height: auto; line-height: 1.4; }
+.mf-toggle-btn + .mf-link { margin-left: 8px; }
 .mf-ref-link { color: var(--text-color); text-decoration: none; }
 .mf-ref-link:hover { color: var(--primary); text-decoration: underline; }
 .mf-empty { text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; }

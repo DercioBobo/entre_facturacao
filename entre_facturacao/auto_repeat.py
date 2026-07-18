@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import add_months, get_first_day, get_last_day, getdate
+from frappe.utils import add_months, cint, get_first_day, get_last_day, getdate
 
 
 @frappe.whitelist()
@@ -56,3 +56,18 @@ def skip_auto_repeat_this_month(auto_repeat):
 	new_date = add_months(getdate(doc.next_schedule_date), 1)
 	doc.db_set("next_schedule_date", new_date)
 	return {"next_schedule_date": new_date.isoformat()}
+
+
+@frappe.whitelist()
+def toggle_auto_repeat(auto_repeat, disabled):
+	"""Pause or resume a Monthly Auto Repeat from the Monitor page's
+	Próximas Facturas tab, without needing to open the raw Auto Repeat form.
+	"""
+	doc = frappe.get_doc("Auto Repeat", auto_repeat)
+	if doc.reference_doctype != "Sales Invoice":
+		frappe.throw(_("Invalid request"))
+	if not frappe.has_permission("Sales Invoice", "write", doc=doc.reference_document):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	doc.db_set("disabled", cint(disabled))
+	return {"disabled": cint(disabled)}
