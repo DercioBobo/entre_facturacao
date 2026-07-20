@@ -1,3 +1,24 @@
+const EXTRATO_MESES = [
+	"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+	"Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+function extrato_apply_month() {
+	const mes = frappe.query_report.get_filter_value("mes");
+	const ano = frappe.query_report.get_filter_value("ano");
+	if (!mes || !ano) return;
+	const month_index = EXTRATO_MESES.indexOf(mes) + 1;
+	const pad = (n) => String(n).padStart(2, "0");
+	const first = `${ano}-${pad(month_index)}-01`;
+	const last_day = new Date(ano, month_index, 0).getDate();
+	const last = `${ano}-${pad(month_index)}-${pad(last_day)}`;
+	frappe.query_report.set_filter_value({
+		ano_fiscal: "",
+		data_inicio: first,
+		data_fim: last,
+	});
+}
+
 frappe.query_reports["Extrato de Cliente"] = {
 	filters: [
 		{
@@ -15,6 +36,20 @@ frappe.query_reports["Extrato de Cliente"] = {
 			default: frappe.defaults.get_default("company"),
 		},
 		{
+			fieldname: "mes",
+			label: __("Mês"),
+			fieldtype: "Select",
+			options: "\n" + EXTRATO_MESES.join("\n"),
+			on_change: extrato_apply_month,
+		},
+		{
+			fieldname: "ano",
+			label: __("Ano"),
+			fieldtype: "Int",
+			default: new Date().getFullYear(),
+			on_change: extrato_apply_month,
+		},
+		{
 			fieldname: "ano_fiscal",
 			label: __("Ano Fiscal"),
 			fieldtype: "Link",
@@ -24,6 +59,7 @@ frappe.query_reports["Extrato de Cliente"] = {
 				if (!fiscal_year) return;
 				frappe.db.get_value("Fiscal Year", fiscal_year, ["year_start_date", "year_end_date"]).then(({ message }) => {
 					frappe.query_report.set_filter_value({
+						mes: "",
 						data_inicio: message.year_start_date,
 						data_fim: message.year_end_date,
 					});
