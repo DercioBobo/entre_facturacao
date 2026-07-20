@@ -40,6 +40,13 @@ frappe.query_reports["Extrato de Cliente"] = {
 			label: __("Até"),
 			fieldtype: "Date",
 		},
+		{
+			fieldname: "tipo",
+			label: __("Tipo"),
+			fieldtype: "Select",
+			options: "Facturas e Pagamentos\nSó Facturas\nSó Pagamentos",
+			default: "Facturas e Pagamentos",
+		},
 	],
 
 	onload: () => {

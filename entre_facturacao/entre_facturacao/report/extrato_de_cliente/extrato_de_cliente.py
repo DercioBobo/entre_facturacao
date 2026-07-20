@@ -41,10 +41,13 @@ def get_columns():
 def get_data(filters):
 	cliente = filters["cliente"]
 	empresa = filters.get("empresa")
+	tipo = filters.get("tipo")
 
 	eventos = []
-	eventos += get_eventos_factura(cliente, empresa)
-	eventos += get_eventos_pagamento(cliente, empresa)
+	if tipo != "Só Pagamentos":
+		eventos += get_eventos_factura(cliente, empresa)
+	if tipo != "Só Facturas":
+		eventos += get_eventos_pagamento(cliente, empresa)
 
 	eventos.sort(key=lambda e: (e["data"], e["_ordem"]))
 
@@ -60,6 +63,8 @@ def get_data(filters):
 		eventos = [e for e in eventos if e["data"] >= data_inicio]
 	if data_fim:
 		eventos = [e for e in eventos if e["data"] <= data_fim]
+
+	eventos.sort(key=lambda e: e["data"], reverse=True)
 
 	return eventos
 
