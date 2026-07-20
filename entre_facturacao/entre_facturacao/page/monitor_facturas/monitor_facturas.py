@@ -101,7 +101,7 @@ def _query_invoices(from_date=None, to_date=None, customer=None, status=None, co
 
 
 def _query_upcoming(from_date=None, to_date=None, customer=None, status=None, company=None):
-	conditions = ["ar.reference_doctype = 'Sales Invoice'", "ar.docstatus = 1"]
+	conditions = ["ar.reference_doctype = 'Sales Invoice'"]
 	params = {}
 
 	if company:

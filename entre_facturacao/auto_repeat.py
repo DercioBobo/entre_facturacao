@@ -29,7 +29,6 @@ def get_conflicting_auto_repeat(sales_invoice):
 		FROM `tabAuto Repeat` ar
 		INNER JOIN `tabSales Invoice` ref ON ref.name = ar.reference_document
 		WHERE ar.reference_doctype = 'Sales Invoice'
-		  AND ar.docstatus = 1
 		  AND ar.disabled = 0
 		  AND ar.frequency = 'Monthly'
 		  AND ref.customer = %(customer)s
