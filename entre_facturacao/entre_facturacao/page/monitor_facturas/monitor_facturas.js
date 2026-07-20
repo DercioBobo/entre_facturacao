@@ -135,6 +135,7 @@ class MonitorFacturas {
 					<thead><tr>
 						<th>${__("Cliente")}</th>
 						<th>${__("Nº Factura")}</th>
+						<th>${__("Título")}</th>
 						<th>${__("Emissão")}</th>
 						<th>${__("Vencimento")}</th>
 						<th class="mf-r">${__("Total")}</th>
@@ -298,6 +299,7 @@ class MonitorFacturas {
 			<tr>
 				<td>${frappe.utils.escape_html(r.customer_name || r.customer)}</td>
 				<td>${frappe.utils.escape_html(r.invoice)}</td>
+				<td>${frappe.utils.escape_html(r.invoice_title || "")}</td>
 				<td>${frappe.datetime.str_to_user(r.posting_date)}</td>
 				<td>${frappe.datetime.str_to_user(r.due_date)}</td>
 				<td class="mf-r">${format_currency(r.grand_total)}</td>
@@ -325,7 +327,7 @@ class MonitorFacturas {
 		);
 		this.$body.find("#mf-tfoot").html(`
 			<tr class="mf-tfoot-row">
-				<td colspan="4">${__("Total")}</td>
+				<td colspan="5">${__("Total")}</td>
 				<td class="mf-r">${format_currency(total_row.grand_total)}</td>
 				<td class="mf-r">${format_currency(total_row.paid)}</td>
 				<td class="mf-r">${format_currency(total_row.outstanding_amount)}</td>
@@ -418,6 +420,7 @@ class MonitorFacturas {
 					<thead><tr>
 						<th>${__("Cliente")}</th>
 						<th>${__("Factura de Referência")}</th>
+						<th>${__("Título")}</th>
 						<th>${__("Próxima Data")}</th>
 						<th>${__("Frequência")}</th>
 						<th class="mf-r">${__("Valor Esperado")}</th>
@@ -609,6 +612,7 @@ class MonitorFacturas {
 			<tr>
 				<td>${frappe.utils.escape_html(r.customer_name || r.customer)}</td>
 				<td><a href="/app/sales-invoice/${encodeURIComponent(r.invoice_ref)}" target="_blank" class="mf-ref-link">${frappe.utils.escape_html(r.invoice_ref)}</a></td>
+				<td>${frappe.utils.escape_html(r.invoice_title || "")}</td>
 				<td>${r.next_schedule_date ? frappe.datetime.str_to_user(r.next_schedule_date) : "—"}</td>
 				<td>${frappe.utils.escape_html(MF_FREQ_LABELS[r.frequency] || r.frequency || "—")}</td>
 				<td class="mf-r">${format_currency(r.grand_total)}</td>
@@ -630,7 +634,7 @@ class MonitorFacturas {
 		const total_expected = rows.reduce((acc, r) => acc + (Number(r.grand_total) || 0), 0);
 		this.$body.find("#mf-up-tfoot").html(`
 			<tr class="mf-tfoot-row">
-				<td colspan="4">${__("Total")}</td>
+				<td colspan="5">${__("Total")}</td>
 				<td class="mf-r">${format_currency(total_expected)}</td>
 				<td></td>
 				<td></td>

@@ -53,6 +53,7 @@ def _query_invoices(from_date=None, to_date=None, customer=None, status=None, co
 		f"""
 		SELECT
 			si.name               AS invoice,
+			si.invoice_title,
 			si.customer,
 			si.customer_name,
 			si.posting_date,
@@ -140,6 +141,7 @@ def _query_upcoming(from_date=None, to_date=None, customer=None, status=None, co
 			ar.end_date,
 			si.customer,
 			si.customer_name,
+			si.invoice_title,
 			si.grand_total
 		FROM `tabAuto Repeat` ar
 		INNER JOIN `tabSales Invoice` si ON si.name = ar.reference_document
@@ -215,8 +217,8 @@ def get_default_fiscal_year(company=None):
 
 # ───────────────────────────── Exports ─────────────────────────────
 
-INVOICE_HEADERS = ["Cliente", "Nº Factura", "Emissão", "Vencimento", "Total", "Pago", "Em Dívida", "Estado"]
-UPCOMING_HEADERS = ["Cliente", "Factura de Referência", "Próxima Data", "Frequência", "Valor Esperado", "Estado"]
+INVOICE_HEADERS = ["Cliente", "Nº Factura", "Título", "Emissão", "Vencimento", "Total", "Pago", "Em Dívida", "Estado"]
+UPCOMING_HEADERS = ["Cliente", "Factura de Referência", "Título", "Próxima Data", "Frequência", "Valor Esperado", "Estado"]
 
 
 def _invoice_table(rows):
@@ -226,6 +228,7 @@ def _invoice_table(rows):
 			[
 				r.customer_name or r.customer,
 				r.invoice,
+				r.invoice_title or "",
 				formatdate(r.posting_date),
 				formatdate(r.due_date) if r.due_date else "",
 				flt(r.grand_total, 2),
@@ -237,6 +240,7 @@ def _invoice_table(rows):
 	data.append(
 		[
 			_("Total"),
+			"",
 			"",
 			"",
 			"",
@@ -256,13 +260,14 @@ def _upcoming_table(rows):
 			[
 				r.customer_name or r.customer,
 				r.invoice_ref,
+				r.invoice_title or "",
 				formatdate(r.next_schedule_date) if r.next_schedule_date else "",
 				_(FREQ_LABELS.get(r.frequency, r.frequency or "")),
 				flt(r.grand_total, 2),
 				_(r.display_status),
 			]
 		)
-	data.append([_("Total"), "", "", "", flt(sum(flt(r.grand_total) for r in rows), 2), ""])
+	data.append([_("Total"), "", "", "", "", flt(sum(flt(r.grand_total) for r in rows), 2), ""])
 	return data
 
 
@@ -361,7 +366,7 @@ def export_invoices_pdf(
 	table = _invoice_table(rows)
 	letterhead_html = _get_letterhead_html(letter_head) if cint(with_letterhead) else ""
 	html = _html_page(
-		_("Monitor de Facturas"), table[0], table[1:], right_align_cols=(4, 5, 6), letterhead_html=letterhead_html
+		_("Monitor de Facturas"), table[0], table[1:], right_align_cols=(5, 6, 7), letterhead_html=letterhead_html
 	)
 	frappe.response["filename"] = "monitor-facturas.pdf"
 	frappe.response["filecontent"] = get_pdf(html, options=_pdf_options(orientation))
@@ -400,7 +405,7 @@ def export_upcoming_pdf(
 	table = _upcoming_table(rows)
 	letterhead_html = _get_letterhead_html(letter_head) if cint(with_letterhead) else ""
 	html = _html_page(
-		_("Próximas Facturas"), table[0], table[1:], right_align_cols=(4,), letterhead_html=letterhead_html
+		_("Próximas Facturas"), table[0], table[1:], right_align_cols=(5,), letterhead_html=letterhead_html
 	)
 	frappe.response["filename"] = "proximas-facturas.pdf"
 	frappe.response["filecontent"] = get_pdf(html, options=_pdf_options(orientation))

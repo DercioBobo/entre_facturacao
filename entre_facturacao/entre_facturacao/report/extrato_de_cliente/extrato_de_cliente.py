@@ -78,7 +78,7 @@ def get_eventos_factura(cliente, empresa=None):
 
 	rows = frappe.db.sql(
 		f"""
-		SELECT si.name, si.posting_date, si.due_date, si.grand_total, si.outstanding_amount
+		SELECT si.name, si.posting_date, si.due_date, si.grand_total, si.outstanding_amount, si.invoice_title
 		FROM `tabSales Invoice` si
 		WHERE {" AND ".join(conditions)}
 		""",
@@ -102,7 +102,7 @@ def get_eventos_factura(cliente, empresa=None):
 				"tipo": _("Factura"),
 				"documento": r.name,
 				"documento_doctype": "Sales Invoice",
-				"descricao": _("Factura Nº {0}").format(r.name),
+				"descricao": r.invoice_title or _("Factura Nº {0}").format(r.name),
 				"debito": flt(r.grand_total),
 				"credito": 0,
 				"estado": estado,

@@ -21,5 +21,14 @@
   "insert_after": "custom_signature_section",
   "label": "Print Signature",
   "name": "Sales Invoice-custom_print_signature"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "invoice_title",
+  "fieldtype": "Data",
+  "insert_after": "items_section",
+  "label": "Título",
+  "name": "Sales Invoice-invoice_title"
  }
 ]

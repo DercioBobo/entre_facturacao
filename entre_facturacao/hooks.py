@@ -34,7 +34,7 @@ fixtures = [
         "doctype": "Custom Field",
         "filters": [
             ["dt", "=", "Sales Invoice"],
-            ["fieldname", "in", ["custom_signature_section", "custom_print_signature"]],
+            ["fieldname", "in", ["custom_signature_section", "custom_print_signature", "invoice_title"]],
         ],
     },
 ]
