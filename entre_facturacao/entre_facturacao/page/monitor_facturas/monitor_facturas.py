@@ -193,19 +193,23 @@ def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=No
 
 @frappe.whitelist()
 def get_default_fiscal_year(company=None):
-	"""Return the Fiscal Year currently in effect for the given company."""
+	"""Return the Fiscal Year whose date range contains today's actual date."""
 	if not frappe.has_permission("Fiscal Year", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	from erpnext.accounts.utils import get_fiscal_year
 
-	try:
-		fy = get_fiscal_year(company=company, as_dict=True)
-	except Exception:
+	today_val = today()
+	fy = frappe.db.get_value(
+		"Fiscal Year",
+		{"year_start_date": ["<=", today_val], "year_end_date": [">=", today_val]},
+		["name", "year_start_date", "year_end_date"],
+		as_dict=True,
+	)
+	if not fy:
 		return None
 	return {
-		"name": fy.get("name"),
-		"year_start_date": fy.get("year_start_date"),
-		"year_end_date": fy.get("year_end_date"),
+		"name": fy.name,
+		"year_start_date": fy.year_start_date,
+		"year_end_date": fy.year_end_date,
 	}
 
 
