@@ -191,6 +191,24 @@ def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=No
 	return {"rows": rows, "summary": summary}
 
 
+@frappe.whitelist()
+def get_default_fiscal_year(company=None):
+	"""Return the Fiscal Year currently in effect for the given company."""
+	if not frappe.has_permission("Fiscal Year", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	from erpnext.accounts.utils import get_fiscal_year
+
+	try:
+		fy = get_fiscal_year(company=company, as_dict=True)
+	except Exception:
+		return None
+	return {
+		"name": fy.get("name"),
+		"year_start_date": fy.get("year_start_date"),
+		"year_end_date": fy.get("year_end_date"),
+	}
+
+
 # ───────────────────────────── Exports ─────────────────────────────
 
 INVOICE_HEADERS = ["Cliente", "Nº Factura", "Emissão", "Vencimento", "Total", "Pago", "Em Dívida", "Estado"]

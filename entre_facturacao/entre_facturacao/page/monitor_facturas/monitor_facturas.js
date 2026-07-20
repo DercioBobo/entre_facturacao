@@ -71,6 +71,9 @@ class MonitorFacturas {
 						<label>${__("Mês")}</label>
 						<input id="mf-month" type="month">
 					</div>
+					<div class="mf-fg" id="mf-fiscal-year-wrap">
+						<label>${__("Ano Fiscal")}</label>
+					</div>
 					<div class="mf-fg">
 						<label>${__("De")}</label>
 						<input id="mf-from" type="date">
@@ -175,15 +178,40 @@ class MonitorFacturas {
 		this.customer_control.refresh();
 		this.customer_control.$input.on("change awesomplete-selectcomplete", () => this.search());
 
+		this.fiscal_year_control = frappe.ui.form.make_control({
+			df: {
+				fieldtype: "Link",
+				fieldname: "fiscal_year",
+				options: "Fiscal Year",
+				placeholder: __("Automático"),
+			},
+			parent: this.$body.find("#mf-fiscal-year-wrap")[0],
+			render_input: true,
+		});
+		this.fiscal_year_control.refresh();
+		this.fiscal_year_control.$input.on("change awesomplete-selectcomplete", async () => {
+			const fy = this.fiscal_year_control.get_value();
+			if (fy) {
+				const { message } = await frappe.db.get_value("Fiscal Year", fy, [
+					"year_start_date",
+					"year_end_date",
+				]);
+				this._apply_fiscal_year(message.year_start_date, message.year_end_date, "#mf-from", "#mf-to", "#mf-month");
+			}
+			this.search();
+		});
+
 		this.$body.find("#mf-search").on("click", () => this.search());
 		this.$body.find("#mf-clear").on("click", () => this._clear());
 		this.$body.find("#mf-status").on("change", () => this.search());
 		this.$body.find("#mf-month").on("change", (e) => {
 			this._apply_month(e.target.value, "#mf-from", "#mf-to");
+			this.fiscal_year_control.set_value("");
 			this.search();
 		});
 		this.$body.find("#mf-from, #mf-to").on("change", () => {
 			this.$body.find("#mf-month").val("");
+			this.fiscal_year_control.set_value("");
 			this.search();
 		});
 		this.$body.find("#mf-print").on("click", (e) => {
@@ -204,7 +232,13 @@ class MonitorFacturas {
 			);
 		});
 
-		this.search();
+		this._init_default_fiscal_year(
+			this.company_control.get_value(),
+			this.fiscal_year_control,
+			"#mf-from",
+			"#mf-to",
+			"#mf-month"
+		).then(() => this.search());
 	}
 
 	_get_filters() {
@@ -304,6 +338,7 @@ class MonitorFacturas {
 		this.$body.find("#mf-status").val("");
 		this.$body.find("#mf-month, #mf-from, #mf-to").val("");
 		this.customer_control.set_value("");
+		this.fiscal_year_control.set_value("");
 		this.$body.find("#mf-summary, #mf-tbl-wrap, #mf-empty").hide();
 		this.search();
 	}
@@ -324,6 +359,9 @@ class MonitorFacturas {
 					<div class="mf-fg">
 						<label>${__("Mês")}</label>
 						<input id="mf-up-month" type="month">
+					</div>
+					<div class="mf-fg" id="mf-up-fiscal-year-wrap">
+						<label>${__("Ano Fiscal")}</label>
 					</div>
 					<div class="mf-fg">
 						<label>${__("De")}</label>
@@ -425,15 +463,46 @@ class MonitorFacturas {
 			this.search_upcoming()
 		);
 
+		this.upcoming_fiscal_year_control = frappe.ui.form.make_control({
+			df: {
+				fieldtype: "Link",
+				fieldname: "fiscal_year",
+				options: "Fiscal Year",
+				placeholder: __("Automático"),
+			},
+			parent: this.$body.find("#mf-up-fiscal-year-wrap")[0],
+			render_input: true,
+		});
+		this.upcoming_fiscal_year_control.refresh();
+		this.upcoming_fiscal_year_control.$input.on("change awesomplete-selectcomplete", async () => {
+			const fy = this.upcoming_fiscal_year_control.get_value();
+			if (fy) {
+				const { message } = await frappe.db.get_value("Fiscal Year", fy, [
+					"year_start_date",
+					"year_end_date",
+				]);
+				this._apply_fiscal_year(
+					message.year_start_date,
+					message.year_end_date,
+					"#mf-up-from",
+					"#mf-up-to",
+					"#mf-up-month"
+				);
+			}
+			this.search_upcoming();
+		});
+
 		this.$body.find("#mf-up-search").on("click", () => this.search_upcoming());
 		this.$body.find("#mf-up-clear").on("click", () => this._clear_upcoming());
 		this.$body.find("#mf-up-status").on("change", () => this.search_upcoming());
 		this.$body.find("#mf-up-month").on("change", (e) => {
 			this._apply_month(e.target.value, "#mf-up-from", "#mf-up-to");
+			this.upcoming_fiscal_year_control.set_value("");
 			this.search_upcoming();
 		});
 		this.$body.find("#mf-up-from, #mf-up-to").on("change", () => {
 			this.$body.find("#mf-up-month").val("");
+			this.upcoming_fiscal_year_control.set_value("");
 			this.search_upcoming();
 		});
 		this.$body.find("#mf-up-print").on("click", (e) => {
@@ -459,6 +528,14 @@ class MonitorFacturas {
 		this.$body.find("#mf-up-tbody").on("click", ".mf-toggle-btn", (e) => {
 			this._toggle_auto_repeat($(e.currentTarget));
 		});
+
+		this._init_default_fiscal_year(
+			this.upcoming_company_control.get_value(),
+			this.upcoming_fiscal_year_control,
+			"#mf-up-from",
+			"#mf-up-to",
+			"#mf-up-month"
+		);
 	}
 
 	_toggle_auto_repeat($btn) {
@@ -564,6 +641,7 @@ class MonitorFacturas {
 		this.$body.find("#mf-up-status").val("");
 		this.$body.find("#mf-up-month, #mf-up-from, #mf-up-to").val("");
 		this.upcoming_customer_control.set_value("");
+		this.upcoming_fiscal_year_control.set_value("");
 		this.$body.find("#mf-up-summary, #mf-up-tbl-wrap, #mf-up-empty").hide();
 		this.search_upcoming();
 	}
@@ -579,6 +657,24 @@ class MonitorFacturas {
 		const last = `${year}-${pad(month)}-${pad(last_day)}`;
 		this.$body.find(from_sel).val(first);
 		this.$body.find(to_sel).val(last);
+	}
+
+	_apply_fiscal_year(year_start_date, year_end_date, from_sel, to_sel, month_sel) {
+		this.$body.find(month_sel).val("");
+		this.$body.find(from_sel).val(year_start_date);
+		this.$body.find(to_sel).val(year_end_date);
+	}
+
+	async _init_default_fiscal_year(company, fy_control, from_sel, to_sel, month_sel) {
+		if (!company) return;
+		const r = await frappe.call({
+			method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_default_fiscal_year",
+			args: { company },
+		});
+		if (r.message) {
+			fy_control.set_value(r.message.name);
+			this._apply_fiscal_year(r.message.year_start_date, r.message.year_end_date, from_sel, to_sel, month_sel);
+		}
 	}
 
 	_export(method, filters) {

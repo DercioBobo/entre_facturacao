@@ -15,6 +15,22 @@ frappe.query_reports["Extrato de Cliente"] = {
 			default: frappe.defaults.get_default("company"),
 		},
 		{
+			fieldname: "ano_fiscal",
+			label: __("Ano Fiscal"),
+			fieldtype: "Link",
+			options: "Fiscal Year",
+			on_change: () => {
+				const fiscal_year = frappe.query_report.get_filter_value("ano_fiscal");
+				if (!fiscal_year) return;
+				frappe.db.get_value("Fiscal Year", fiscal_year, ["year_start_date", "year_end_date"]).then(({ message }) => {
+					frappe.query_report.set_filter_value({
+						data_inicio: message.year_start_date,
+						data_fim: message.year_end_date,
+					});
+				});
+			},
+		},
+		{
 			fieldname: "data_inicio",
 			label: __("De"),
 			fieldtype: "Date",
@@ -25,6 +41,22 @@ frappe.query_reports["Extrato de Cliente"] = {
 			fieldtype: "Date",
 		},
 	],
+
+	onload: () => {
+		const empresa = frappe.query_report.get_filter_value("empresa");
+		if (!empresa) return;
+		frappe.call({
+			method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_default_fiscal_year",
+			args: { company: empresa },
+		}).then((r) => {
+			if (!r.message) return;
+			frappe.query_report.set_filter_value({
+				ano_fiscal: r.message.name,
+				data_inicio: r.message.year_start_date,
+				data_fim: r.message.year_end_date,
+			});
+		});
+	},
 
 	formatter: (value, row, column, data, default_formatter) => {
 		value = default_formatter(value, row, column, data);
