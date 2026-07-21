@@ -5,8 +5,9 @@ const EXTRATO_MESES = [
 
 function extrato_apply_month() {
 	const mes = frappe.query_report.get_filter_value("mes");
-	const ano = frappe.query_report.get_filter_value("ano");
-	if (!mes || !ano) return;
+	if (!mes) return;
+	const data_inicio_atual = frappe.query_report.get_filter_value("data_inicio");
+	const ano = data_inicio_atual ? parseInt(data_inicio_atual.substring(0, 4), 10) : new Date().getFullYear();
 	const month_index = EXTRATO_MESES.indexOf(mes) + 1;
 	const pad = (n) => String(n).padStart(2, "0");
 	const first = `${ano}-${pad(month_index)}-01`;
@@ -40,13 +41,6 @@ frappe.query_reports["Extrato de Cliente"] = {
 			label: __("Mês"),
 			fieldtype: "Select",
 			options: "\n" + EXTRATO_MESES.join("\n"),
-			on_change: extrato_apply_month,
-		},
-		{
-			fieldname: "ano",
-			label: __("Ano"),
-			fieldtype: "Int",
-			default: new Date().getFullYear(),
 			on_change: extrato_apply_month,
 		},
 		{
@@ -87,7 +81,6 @@ frappe.query_reports["Extrato de Cliente"] = {
 
 	onload: () => {
 		const empresa = frappe.query_report.get_filter_value("empresa");
-		if (!empresa) return;
 		frappe.call({
 			method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_default_fiscal_year",
 			args: { company: empresa },
