@@ -34,7 +34,7 @@ def get_columns():
 		{"label": _("Débito"), "fieldname": "debito", "fieldtype": "Currency", "width": 110},
 		{"label": _("Crédito"), "fieldname": "credito", "fieldtype": "Currency", "width": 110},
 		{"label": _("Estado"), "fieldname": "estado", "fieldtype": "Data", "width": 100},
-		{"label": _("Saldo Devedor"), "fieldname": "saldo_devedor", "fieldtype": "Currency", "width": 130},
+		{"label": _("Saldo Devedor"), "fieldname": "saldo_devedor", "fieldtype": "Data", "width": 130, "align": "right"},
 	]
 
 

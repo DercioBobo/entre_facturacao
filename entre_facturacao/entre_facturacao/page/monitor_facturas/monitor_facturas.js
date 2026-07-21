@@ -670,7 +670,6 @@ class MonitorFacturas {
 	}
 
 	async _init_default_fiscal_year(company, fy_control, from_sel, to_sel, month_sel) {
-		if (!company) return;
 		const r = await frappe.call({
 			method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_default_fiscal_year",
 			args: { company },

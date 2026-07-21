@@ -102,7 +102,11 @@ frappe.query_reports["Extrato de Cliente"] = {
 	},
 
 	formatter: (value, row, column, data, default_formatter) => {
-		value = default_formatter(value, row, column, data);
+		if (column.fieldname === "saldo_devedor") {
+			value = format_currency(value);
+		} else {
+			value = default_formatter(value, row, column, data);
+		}
 
 		if (!data) return value;
 
