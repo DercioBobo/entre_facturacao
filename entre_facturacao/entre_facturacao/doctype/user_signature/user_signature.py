@@ -29,4 +29,10 @@ def has_permission(doc, user=None, permission_type=None):
 			return True
 		doc = frappe.get_doc("User Signature", doc)
 
+	if not doc.user:
+		# Blank/unsaved document (e.g. frappe.new_doc() used internally to
+		# check "create" permission during file attach). Nothing to protect
+		# yet; validate() enforces ownership on insert.
+		return True
+
 	return doc.user == user
