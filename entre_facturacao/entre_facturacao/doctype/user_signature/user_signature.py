@@ -20,4 +20,13 @@ def has_permission(doc, user=None, permission_type=None):
 	user = user or frappe.session.user
 	if "System Manager" in frappe.get_roles(user):
 		return True
+
+	if isinstance(doc, str):
+		if not frappe.db.exists("User Signature", doc):
+			# Doc not yet inserted (e.g. attaching the signature image before
+			# first save uses the temporary "new-..." name). Nothing to
+			# protect yet; validate() enforces ownership on insert.
+			return True
+		doc = frappe.get_doc("User Signature", doc)
+
 	return doc.user == user
