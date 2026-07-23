@@ -12,5 +12,11 @@ frappe.ui.form.on("User Signature", {
 		if (frm.is_new() && !frm.doc.user && !frappe.user.has_role("System Manager")) {
 			frm.set_value("user", frappe.session.user);
 		}
+
+		if (frm.is_new()) {
+			frm.dashboard.set_headline(
+				__("Save first, then upload the signature image.")
+			);
+		}
 	},
 });
