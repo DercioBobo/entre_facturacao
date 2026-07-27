@@ -8,6 +8,11 @@ class UserSignature(Document):
 		if self.user != frappe.session.user and "System Manager" not in frappe.get_roles():
 			frappe.throw(_("You can only manage your own signature."))
 
+		if self.image_width is not None and self.image_width <= 0:
+			frappe.throw(_("Width must be greater than 0."))
+		if self.image_height is not None and self.image_height <= 0:
+			frappe.throw(_("Height must be greater than 0."))
+
 
 def get_permission_query_conditions(user=None):
 	user = user or frappe.session.user

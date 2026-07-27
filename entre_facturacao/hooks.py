@@ -18,6 +18,7 @@ extend_bootinfo = "entre_facturacao.boot.boot_session"
 jinja = {
     "methods": [
         "entre_facturacao.utils.get_user_signature",
+        "entre_facturacao.utils.get_user_signature_details",
     ],
 }
 

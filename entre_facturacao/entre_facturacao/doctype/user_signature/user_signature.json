@@ -7,7 +7,13 @@
  "engine": "InnoDB",
  "field_order": [
   "user",
-  "signature_image"
+  "signature_image",
+  "column_break_dims",
+  "image_width",
+  "image_height",
+  "section_break_details",
+  "signature_name",
+  "cargo"
  ],
  "fields": [
   {
@@ -25,6 +31,46 @@
    "fieldtype": "Attach Image",
    "in_list_view": 1,
    "label": "Signature Image"
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "column_break_dims",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "150",
+   "depends_on": "eval:!doc.__islocal",
+   "description": "Display width of the signature image on printed invoices.",
+   "fieldname": "image_width",
+   "fieldtype": "Int",
+   "label": "Width (px)",
+   "non_negative": 1
+  },
+  {
+   "default": "60",
+   "depends_on": "eval:!doc.__islocal",
+   "description": "Display height of the signature image on printed invoices.",
+   "fieldname": "image_height",
+   "fieldtype": "Int",
+   "label": "Height (px)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "section_break_details",
+   "fieldtype": "Section Break",
+   "label": "Signature Details"
+  },
+  {
+   "description": "Name to print under the signature.",
+   "fieldname": "signature_name",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "description": "Job title / position to print under the signature.",
+   "fieldname": "cargo",
+   "fieldtype": "Data",
+   "label": "Cargo"
   }
  ],
  "index_web_pages_for_search": 1,
