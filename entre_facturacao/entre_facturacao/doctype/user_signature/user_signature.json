@@ -11,6 +11,8 @@
   "column_break_dims",
   "image_width",
   "image_height",
+  "section_break_preview",
+  "signature_preview",
   "section_break_details",
   "signature_name",
   "cargo"
@@ -54,6 +56,16 @@
    "fieldtype": "Int",
    "label": "Height (px)",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval:!doc.__islocal",
+   "fieldname": "section_break_preview",
+   "fieldtype": "Section Break",
+   "label": "Preview"
+  },
+  {
+   "fieldname": "signature_preview",
+   "fieldtype": "HTML"
   },
   {
    "fieldname": "section_break_details",
