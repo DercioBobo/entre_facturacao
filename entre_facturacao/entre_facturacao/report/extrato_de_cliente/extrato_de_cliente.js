@@ -77,6 +77,17 @@ frappe.query_reports["Extrato de Cliente"] = {
 			options: "Facturas e Pagamentos\nSó Facturas\nSó Pagamentos",
 			default: "Facturas e Pagamentos",
 		},
+		{
+			fieldname: "estado",
+			label: __("Estado"),
+			fieldtype: "MultiCheck",
+			options: [
+				{ value: "Paga", label: __("Paga") },
+				{ value: "Em Dívida", label: __("Em Dívida") },
+				{ value: "Vencida", label: __("Vencida") },
+			],
+			columns: 3,
+		},
 	],
 
 	onload: () => {
@@ -104,10 +115,14 @@ frappe.query_reports["Extrato de Cliente"] = {
 		if (!data) return value;
 
 		if (column.fieldname === "debito" && data.debito) {
-			value = `<span style="color: var(--red-600, #c0392b);">${value}</span>`;
+			const cor = data.estado === __("Paga") ? "var(--green-600, #1f7a4d)" : "var(--red-600, #c0392b)";
+			value = `<span style="color: ${cor};">${value}</span>`;
 		}
 		if (column.fieldname === "credito" && data.credito) {
 			value = `<span style="color: var(--green-600, #1f7a4d); font-weight: 600;">${value}</span>`;
+		}
+		if (column.fieldname === "pendente" && data.pendente) {
+			value = `<span style="color: var(--orange-600, #b8620a); font-weight: 600;">${value}</span>`;
 		}
 		if (column.fieldname === "estado" && data.estado === __("Vencida")) {
 			value = `<span style="color: var(--red-600, #c0392b); font-weight: 600;">${value}</span>`;

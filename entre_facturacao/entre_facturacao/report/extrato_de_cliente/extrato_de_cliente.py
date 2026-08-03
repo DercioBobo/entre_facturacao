@@ -33,6 +33,7 @@ def get_columns():
 		{"label": _("Descrição"), "fieldname": "descricao", "fieldtype": "Data", "width": 220},
 		{"label": _("Débito"), "fieldname": "debito", "fieldtype": "Currency", "width": 110},
 		{"label": _("Crédito"), "fieldname": "credito", "fieldtype": "Currency", "width": 110},
+		{"label": _("Pendente"), "fieldname": "pendente", "fieldtype": "Currency", "width": 110},
 		{"label": _("Estado"), "fieldname": "estado", "fieldtype": "Data", "width": 100},
 		{"label": _("Saldo Devedor"), "fieldname": "saldo_devedor", "fieldtype": "Data", "width": 130, "align": "right"},
 	]
@@ -63,6 +64,13 @@ def get_data(filters):
 		eventos = [e for e in eventos if e["data"] >= data_inicio]
 	if data_fim:
 		eventos = [e for e in eventos if e["data"] <= data_fim]
+
+	estados = filters.get("estado")
+	if estados:
+		if isinstance(estados, str):
+			estados = frappe.parse_json(estados) if estados.startswith("[") else [estados]
+		if estados:
+			eventos = [e for e in eventos if e["tipo"] != _("Factura") or e["estado"] in estados]
 
 	eventos.sort(key=lambda e: e["data"], reverse=True)
 
@@ -105,6 +113,7 @@ def get_eventos_factura(cliente, empresa=None):
 				"descricao": r.invoice_title or _("Factura Nº {0}").format(r.name),
 				"debito": flt(r.grand_total),
 				"credito": 0,
+				"pendente": flt(r.outstanding_amount) if flt(r.outstanding_amount) > 0 else 0,
 				"estado": estado,
 				"_ordem": TIPO_FACTURA,
 			}
@@ -142,6 +151,7 @@ def get_eventos_pagamento(cliente, empresa=None):
 				"descricao": descricao,
 				"debito": 0,
 				"credito": flt(r.paid_amount),
+				"pendente": 0,
 				"estado": "",
 				"_ordem": TIPO_PAGAMENTO,
 			}

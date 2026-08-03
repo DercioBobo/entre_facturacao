@@ -82,15 +82,19 @@ class MonitorFacturas {
 						<label>${__("Até")}</label>
 						<input id="mf-to" type="date">
 					</div>
-					<div class="mf-fg">
+					<div class="mf-fg" id="mf-status-wrap">
 						<label>${__("Estado")}</label>
-						<select id="mf-status">
-							<option value="">${__("Todos")}</option>
-							<option value="Paga">${__("Paga")}</option>
-							<option value="Em Dívida">${__("Em Dívida")}</option>
-							<option value="Vencida">${__("Vencida")}</option>
-							<option value="Rascunho">${__("Rascunho")}</option>
-						</select>
+						<div class="mf-msel dropdown">
+							<button type="button" class="btn btn-default btn-sm dropdown-toggle mf-msel-btn" id="mf-status-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								${__("Todos")}
+							</button>
+							<div class="dropdown-menu mf-msel-menu" id="mf-status-menu">
+								<label class="mf-msel-item"><input type="checkbox" value="Paga"> ${__("Paga")}</label>
+								<label class="mf-msel-item"><input type="checkbox" value="Em Dívida"> ${__("Em Dívida")}</label>
+								<label class="mf-msel-item"><input type="checkbox" value="Vencida"> ${__("Vencida")}</label>
+								<label class="mf-msel-item"><input type="checkbox" value="Rascunho"> ${__("Rascunho")}</label>
+							</div>
+						</div>
 					</div>
 					<div class="mf-fg mf-fg--btns">
 						<button class="btn btn-primary btn-sm" id="mf-search">${__("Pesquisar")}</button>
@@ -204,7 +208,11 @@ class MonitorFacturas {
 
 		this.$body.find("#mf-search").on("click", () => this.search());
 		this.$body.find("#mf-clear").on("click", () => this._clear());
-		this.$body.find("#mf-status").on("change", () => this.search());
+		this.$body.find("#mf-status-menu").on("click", (e) => e.stopPropagation());
+		this.$body.find("#mf-status-menu input[type=checkbox]").on("change", () => {
+			this._update_status_label();
+			this.search();
+		});
 		this.$body.find("#mf-month").on("change", (e) => {
 			this._apply_month(e.target.value, "#mf-from", "#mf-to");
 			this.fiscal_year_control.set_value("");
@@ -242,13 +250,25 @@ class MonitorFacturas {
 		).then(() => this.search());
 	}
 
+	_get_selected_statuses() {
+		return this.$body
+			.find("#mf-status-menu input:checked")
+			.map((_, el) => el.value)
+			.get();
+	}
+
+	_update_status_label() {
+		const checked = this._get_selected_statuses();
+		this.$body.find("#mf-status-btn").text(checked.length ? checked.map((v) => __(v)).join(", ") : __("Todos"));
+	}
+
 	_get_filters() {
 		return {
 			company: this.company_control.get_value() || "",
 			from_date: this.$body.find("#mf-from").val() || "",
 			to_date: this.$body.find("#mf-to").val() || "",
 			customer: this.customer_control.get_value() || "",
-			status: this.$body.find("#mf-status").val() || "",
+			status: this._get_selected_statuses().join(","),
 		};
 	}
 
@@ -337,7 +357,8 @@ class MonitorFacturas {
 	}
 
 	_clear() {
-		this.$body.find("#mf-status").val("");
+		this.$body.find("#mf-status-menu input").prop("checked", false);
+		this._update_status_label();
 		this.$body.find("#mf-month, #mf-from, #mf-to").val("");
 		this.customer_control.set_value("");
 		this.fiscal_year_control.set_value("");
@@ -788,6 +809,17 @@ function _mf_styles() {
 .mf-fg .form-group { margin-bottom: 0 !important; }
 .mf-fg label.control-label { display: none !important; }
 .mf-fg .help-box, .mf-fg .control-value, .mf-fg small.form-text { display: none !important; }
+
+/* ── Multi-select status dropdown ─── */
+.mf-msel-btn { height: 32px !important; line-height: 30px; padding: 0 9px !important;
+	border: 1.5px solid var(--border-color) !important; border-radius: 6px; font-size: 13px;
+	background: var(--fg-color); color: var(--text-color); text-align: left;
+	min-width: 130px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mf-msel-menu { padding: 6px 0; min-width: 170px; }
+.mf-msel-item { display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+	margin: 0; font-size: 13px; font-weight: 400; cursor: pointer; }
+.mf-msel-item:hover { background: var(--subtle-fg); }
+.mf-msel-item input { margin: 0; }
 
 /* ── Summary cards ─── */
 .mf-summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }

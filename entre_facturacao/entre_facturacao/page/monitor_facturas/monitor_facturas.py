@@ -16,6 +16,29 @@ FREQ_LABELS = {
 }
 
 
+def _invoice_status_conditions(status, today_val):
+	statuses = [s.strip() for s in (status or "").split(",") if s.strip()]
+	if not statuses:
+		return "si.docstatus = 1", {}
+
+	clauses = []
+	params = {}
+	if "Paga" in statuses:
+		clauses.append("(si.docstatus = 1 AND si.outstanding_amount <= 0)")
+	if "Em Dívida" in statuses:
+		clauses.append("(si.docstatus = 1 AND si.outstanding_amount > 0 AND si.due_date >= %(today_val)s)")
+		params["today_val"] = today_val
+	if "Vencida" in statuses:
+		clauses.append("(si.docstatus = 1 AND si.outstanding_amount > 0 AND si.due_date < %(today_val)s)")
+		params["today_val"] = today_val
+	if "Rascunho" in statuses:
+		clauses.append("si.docstatus = 0")
+
+	if not clauses:
+		return "si.docstatus = 1", {}
+	return "(" + " OR ".join(clauses) + ")", params
+
+
 def _query_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
 	conditions = ["si.is_return = 0"]
 	params = {}
@@ -34,18 +57,9 @@ def _query_invoices(from_date=None, to_date=None, customer=None, status=None, co
 		params["customer"] = customer
 
 	today_val = today()
-	if status == "Paga":
-		conditions.append("si.docstatus = 1 AND si.outstanding_amount <= 0")
-	elif status == "Em Dívida":
-		conditions.append("si.docstatus = 1 AND si.outstanding_amount > 0 AND si.due_date >= %(today_val)s")
-		params["today_val"] = today_val
-	elif status == "Vencida":
-		conditions.append("si.docstatus = 1 AND si.outstanding_amount > 0 AND si.due_date < %(today_val)s")
-		params["today_val"] = today_val
-	elif status == "Rascunho":
-		conditions.append("si.docstatus = 0")
-	else:
-		conditions.append("si.docstatus = 1")
+	status_sql, status_params = _invoice_status_conditions(status, today_val)
+	conditions.append(status_sql)
+	params.update(status_params)
 
 	where = " AND ".join(conditions)
 
