@@ -45,6 +45,9 @@ frappe.query_reports["Extrato de Cliente Simplificado"] = {
 
 		if (!data) return value;
 
+		if (column.fieldname === "tipo") {
+			value = `<span style="font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em;">${value}</span>`;
+		}
 		if (column.fieldname === "descricao" && !data.factura) {
 			value = `<span style="font-style: italic; color: var(--text-muted, #8d99a6);">${value}</span>`;
 		}

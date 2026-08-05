@@ -1,11 +1,15 @@
-"""Extrato de Cliente Simplificado: mostra, para cada pagamento recebido de
-um cliente, a que factura(s) foi alocado e em que valor - dando visibilidade
-sobre a distribuição de pagamentos que cobrem várias facturas ou que pagam
-apenas parte de uma factura."""
+"""Extrato de Cliente Simplificado: lista todas as facturas de um cliente e,
+para cada pagamento recebido, a que factura(s) foi alocado e em que valor -
+dando visibilidade sobre a distribuição de pagamentos que cobrem várias
+facturas ou que pagam apenas parte de uma factura."""
 
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate
+
+TIPO_FACTURA = 0
+TIPO_ALOCACAO = 1
+TIPO_ADIANTAMENTO = 2
 
 ADIANTAMENTO = _("Adiantamento não alocado")
 
@@ -22,6 +26,7 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{"label": _("Data"), "fieldname": "data", "fieldtype": "Date", "width": 95},
+		{"label": _("Tipo"), "fieldname": "tipo", "fieldtype": "Data", "width": 110},
 		{
 			"label": _("Pagamento"),
 			"fieldname": "pagamento",
@@ -49,8 +54,10 @@ def get_data(filters):
 	cliente = filters["cliente"]
 	empresa = filters.get("empresa")
 
-	linhas = get_alocacoes(cliente, empresa) + get_adiantamentos(cliente, empresa)
-	linhas.sort(key=lambda l: (l["data"], l["pagamento"]))
+	linhas = get_facturas(cliente, empresa) + get_alocacoes(cliente, empresa) + get_adiantamentos(cliente, empresa)
+	linhas.sort(key=lambda l: (l["data"], l["_ordem"]))
+	for l in linhas:
+		del l["_ordem"]
 
 	data_inicio = getdate(filters["data_inicio"]) if filters.get("data_inicio") else None
 	data_fim = getdate(filters["data_fim"]) if filters.get("data_fim") else None
@@ -68,6 +75,53 @@ def get_data(filters):
 
 	linhas.sort(key=lambda l: l["data"], reverse=True)
 	return linhas
+
+
+def get_facturas(cliente, empresa=None):
+	conditions = ["si.customer = %(cliente)s", "si.docstatus = 1", "si.is_return = 0"]
+	params = {"cliente": cliente}
+	if empresa:
+		conditions.append("si.company = %(empresa)s")
+		params["empresa"] = empresa
+
+	rows = frappe.db.sql(
+		f"""
+		SELECT si.name, si.posting_date, si.due_date, si.grand_total, si.outstanding_amount, si.invoice_title
+		FROM `tabSales Invoice` si
+		WHERE {" AND ".join(conditions)}
+		""",
+		params,
+		as_dict=True,
+	)
+
+	today_date = getdate()
+	linhas = []
+	for r in rows:
+		estado = estado_factura(r.outstanding_amount, r.due_date, today_date)
+		linhas.append(
+			{
+				"data": getdate(r.posting_date),
+				"tipo": _("Factura"),
+				"pagamento": None,
+				"modo_pagamento": "",
+				"factura": r.name,
+				"descricao": r.invoice_title or _("Factura Nº {0}").format(r.name),
+				"valor_factura": flt(r.grand_total),
+				"valor_alocado": None,
+				"saldo_factura": flt(r.outstanding_amount),
+				"estado": estado,
+				"_ordem": TIPO_FACTURA,
+			}
+		)
+	return linhas
+
+
+def estado_factura(outstanding_amount, due_date, today_date):
+	if flt(outstanding_amount) <= 0:
+		return _("Paga")
+	if getdate(due_date) < today_date:
+		return _("Vencida")
+	return _("Em Dívida")
 
 
 def get_alocacoes(cliente, empresa=None):
@@ -99,16 +153,11 @@ def get_alocacoes(cliente, empresa=None):
 	today_date = getdate()
 	linhas = []
 	for r in rows:
-		if flt(r.outstanding_amount) <= 0:
-			estado = _("Paga")
-		elif getdate(r.due_date) < today_date:
-			estado = _("Vencida")
-		else:
-			estado = _("Em Dívida")
-
+		estado = estado_factura(r.outstanding_amount, r.due_date, today_date)
 		linhas.append(
 			{
 				"data": getdate(r.posting_date),
+				"tipo": _("Alocação de Pagamento"),
 				"pagamento": r.pagamento,
 				"modo_pagamento": r.mode_of_payment or "",
 				"factura": r.factura,
@@ -117,6 +166,7 @@ def get_alocacoes(cliente, empresa=None):
 				"valor_alocado": flt(r.allocated_amount),
 				"saldo_factura": flt(r.outstanding_amount),
 				"estado": estado,
+				"_ordem": TIPO_ALOCACAO,
 			}
 		)
 	return linhas
@@ -149,14 +199,16 @@ def get_adiantamentos(cliente, empresa=None):
 		linhas.append(
 			{
 				"data": getdate(r.posting_date),
+				"tipo": _("Adiantamento"),
 				"pagamento": r.pagamento,
 				"modo_pagamento": r.mode_of_payment or "",
 				"factura": None,
 				"descricao": ADIANTAMENTO,
-				"valor_factura": 0,
+				"valor_factura": None,
 				"valor_alocado": flt(r.unallocated_amount),
-				"saldo_factura": 0,
+				"saldo_factura": None,
 				"estado": "",
+				"_ordem": TIPO_ADIANTAMENTO,
 			}
 		)
 	return linhas
