@@ -26,7 +26,7 @@ frappe.query_reports["Extrato de Cliente Simplificado"] = {
 		},
 		{
 			fieldname: "estado",
-			label: __("Estado da Factura"),
+			label: __("Estado"),
 			fieldtype: "MultiSelectList",
 			get_data: function (txt) {
 				const options = [
@@ -45,19 +45,13 @@ frappe.query_reports["Extrato de Cliente Simplificado"] = {
 
 		if (!data) return value;
 
-		if (column.fieldname === "tipo") {
-			value = `<span style="font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em;">${value}</span>`;
-		}
-		if (column.fieldname === "descricao" && !data.factura) {
-			value = `<span style="font-style: italic; color: var(--text-muted, #8d99a6);">${value}</span>`;
-		}
 		if (column.fieldname === "estado" && data.estado === __("Vencida")) {
 			value = `<span style="color: var(--red-600, #c0392b); font-weight: 600;">${value}</span>`;
 		}
 		if (column.fieldname === "estado" && data.estado === __("Paga")) {
 			value = `<span style="color: var(--green-600, #1f7a4d);">${value}</span>`;
 		}
-		if (column.fieldname === "valor_alocado" && data.valor_alocado) {
+		if (column.fieldname === "valor_pago" && data.valor_pago) {
 			value = `<span style="color: var(--green-600, #1f7a4d); font-weight: 600;">${value}</span>`;
 		}
 		return value;
