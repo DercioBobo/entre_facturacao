@@ -80,13 +80,16 @@ frappe.query_reports["Extrato de Cliente"] = {
 		{
 			fieldname: "estado",
 			label: __("Estado"),
-			fieldtype: "MultiCheck",
-			options: [
-				{ value: "Paga", label: __("Paga") },
-				{ value: "Em Dívida", label: __("Em Dívida") },
-				{ value: "Vencida", label: __("Vencida") },
-			],
-			columns: 3,
+			fieldtype: "MultiSelectList",
+			get_data: function (txt) {
+				const options = [
+					{ value: "Paga", description: __("Paga") },
+					{ value: "Em Dívida", description: __("Em Dívida") },
+					{ value: "Vencida", description: __("Vencida") },
+				];
+				txt = (txt || "").toLowerCase();
+				return options.filter((o) => o.value.toLowerCase().includes(txt));
+			},
 		},
 	],
 
