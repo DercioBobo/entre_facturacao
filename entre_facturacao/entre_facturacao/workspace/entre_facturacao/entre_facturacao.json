@@ -48,6 +48,18 @@
   },
   {
    "type": "Link",
+   "label": "Extrato de Cliente Simplificado",
+   "link_type": "Report",
+   "link_to": "Extrato de Cliente Simplificado",
+   "is_query_report": 1,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "idx": 4,
+   "doctype": "Workspace Link"
+  },
+  {
+   "type": "Link",
    "label": "Extrato da Factura",
    "link_type": "Report",
    "link_to": "Extrato da Factura",
@@ -55,7 +67,7 @@
    "hidden": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 4,
+   "idx": 5,
    "doctype": "Workspace Link"
   },
   {
@@ -65,7 +77,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 5,
+   "idx": 6,
    "doctype": "Workspace Link"
   },
   {
@@ -77,7 +89,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 6,
+   "idx": 7,
    "doctype": "Workspace Link"
   },
   {
@@ -89,7 +101,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 7,
+   "idx": 8,
    "doctype": "Workspace Link"
   }
  ],
