@@ -71,13 +71,25 @@
    "doctype": "Workspace Link"
   },
   {
+   "type": "Link",
+   "label": "Extrato com IVA",
+   "link_type": "Report",
+   "link_to": "Extrato com IVA",
+   "is_query_report": 1,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "idx": 6,
+   "doctype": "Workspace Link"
+  },
+  {
    "type": "Card Break",
    "label": "Configuração",
    "hidden": 0,
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 6,
+   "idx": 7,
    "doctype": "Workspace Link"
   },
   {
@@ -89,7 +101,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 7,
+   "idx": 8,
    "doctype": "Workspace Link"
   },
   {
@@ -101,7 +113,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 8,
+   "idx": 9,
    "doctype": "Workspace Link"
   }
  ],
