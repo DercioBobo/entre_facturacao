@@ -20,6 +20,8 @@ class MonitorFacturas {
 	constructor(page) {
 		this.page = page;
 		this.$body = $(page.body);
+		this._selected = new Set();
+		this._current_rows = [];
 		this._build();
 	}
 
@@ -134,9 +136,18 @@ class MonitorFacturas {
 				</div>
 			</div>
 
+			<div class="mf-selbar" id="mf-selbar" style="display:none">
+				<span id="mf-sel-count"></span>
+				<span class="mf-selbar-item">${__("Total")}: <strong id="mf-sel-total">—</strong></span>
+				<span class="mf-selbar-item">${__("Pago")}: <strong id="mf-sel-paid">—</strong></span>
+				<span class="mf-selbar-item">${__("Em Dívida")}: <strong id="mf-sel-outstanding">—</strong></span>
+				<button type="button" class="btn btn-xs btn-default" id="mf-sel-clear">${__("Limpar selecção")}</button>
+			</div>
+
 			<div class="mf-tbl-wrap" id="mf-tbl-wrap" style="display:none">
 				<table class="mf-tbl">
 					<thead><tr>
+						<th class="mf-chk"><input type="checkbox" id="mf-select-all" title="${__("Seleccionar tudo")}"></th>
 						<th>${__("Cliente")}</th>
 						<th>${__("Nº Factura")}</th>
 						<th>${__("Título")}</th>
@@ -241,6 +252,32 @@ class MonitorFacturas {
 			);
 		});
 
+		this.$body.find("#mf-select-all").on("change", (e) => {
+			const checked = e.currentTarget.checked;
+			this.$body.find("#mf-tbody tr").each((_, el) => {
+				const $tr = $(el);
+				const invoice = $tr.data("invoice");
+				if (!invoice) return;
+				if (checked) this._selected.add(invoice);
+				else this._selected.delete(invoice);
+				$tr.toggleClass("mf-selected", checked);
+				$tr.find(".mf-row-chk").prop("checked", checked);
+			});
+			this._update_selection_summary();
+		});
+		this.$body.find("#mf-tbody").on("click", (e) => {
+			const $target = $(e.target);
+			if ($target.closest("a.mf-link").length) return;
+			if ($target.is(".mf-row-chk")) return;
+			const $tr = $target.closest("tr");
+			if ($tr.length) this._toggle_row_selection($tr);
+		});
+		this.$body.find("#mf-tbody").on("change", ".mf-row-chk", (e) => {
+			const $chk = $(e.currentTarget);
+			this._toggle_row_selection($chk.closest("tr"), $chk.is(":checked"));
+		});
+		this.$body.find("#mf-sel-clear").on("click", () => this._clear_selection());
+
 		this._init_default_fiscal_year(
 			this.company_control.get_value(),
 			this.fiscal_year_control,
@@ -248,6 +285,58 @@ class MonitorFacturas {
 			"#mf-to",
 			"#mf-month"
 		).then(() => this.search());
+	}
+
+	_toggle_row_selection($tr, force) {
+		const invoice = $tr.data("invoice");
+		if (!invoice) return;
+		const should_select = force !== undefined ? force : !this._selected.has(invoice);
+		if (should_select) this._selected.add(invoice);
+		else this._selected.delete(invoice);
+		$tr.toggleClass("mf-selected", should_select);
+		$tr.find(".mf-row-chk").prop("checked", should_select);
+		this._update_select_all_checkbox();
+		this._update_selection_summary();
+	}
+
+	_update_select_all_checkbox() {
+		const $rows = this.$body.find("#mf-tbody tr");
+		const total = $rows.length;
+		const selected = $rows.filter((_, el) => this._selected.has($(el).data("invoice"))).length;
+		const $all = this.$body.find("#mf-select-all");
+		$all.prop("checked", total > 0 && selected === total);
+		$all.prop("indeterminate", selected > 0 && selected < total);
+	}
+
+	_clear_selection() {
+		this._selected.clear();
+		this.$body.find("#mf-tbody tr").removeClass("mf-selected");
+		this.$body.find("#mf-tbody .mf-row-chk").prop("checked", false);
+		this._update_select_all_checkbox();
+		this._update_selection_summary();
+	}
+
+	_update_selection_summary() {
+		const $bar = this.$body.find("#mf-selbar");
+		if (!this._selected.size) {
+			$bar.hide();
+			return;
+		}
+		const selected_rows = this._current_rows.filter((r) => this._selected.has(r.invoice));
+		const totals = selected_rows.reduce(
+			(acc, r) => {
+				acc.grand_total += Number(r.grand_total) || 0;
+				acc.paid += Number(r.paid) || 0;
+				acc.outstanding_amount += Number(r.outstanding_amount) || 0;
+				return acc;
+			},
+			{ grand_total: 0, paid: 0, outstanding_amount: 0 }
+		);
+		$bar.find("#mf-sel-count").text(__("{0} factura(s) seleccionada(s)", [selected_rows.length]));
+		$bar.find("#mf-sel-total").text(format_currency(totals.grand_total));
+		$bar.find("#mf-sel-paid").text(format_currency(totals.paid));
+		$bar.find("#mf-sel-outstanding").text(format_currency(totals.outstanding_amount));
+		$bar.show();
 	}
 
 	_get_selected_statuses() {
@@ -286,6 +375,11 @@ class MonitorFacturas {
 	}
 
 	_render({ rows, summary }) {
+		this._current_rows = rows;
+		this._selected.clear();
+		this.$body.find("#mf-selbar").hide();
+		this.$body.find("#mf-select-all").prop("checked", false).prop("indeterminate", false);
+
 		const $sum = this.$body.find("#mf-summary").show();
 		$sum.find("#mf-s-total").text(format_currency(summary.total_invoiced));
 		$sum.find("#mf-s-count").text(
@@ -316,7 +410,8 @@ class MonitorFacturas {
 		const html = rows
 			.map(
 				(r) => `
-			<tr>
+			<tr data-invoice="${frappe.utils.escape_html(r.invoice)}">
+				<td class="mf-chk"><input type="checkbox" class="mf-row-chk"></td>
 				<td>${frappe.utils.escape_html(r.customer_name || r.customer)}</td>
 				<td>${frappe.utils.escape_html(r.invoice)}</td>
 				<td>${frappe.utils.escape_html(r.invoice_title || "")}</td>
@@ -347,7 +442,7 @@ class MonitorFacturas {
 		);
 		this.$body.find("#mf-tfoot").html(`
 			<tr class="mf-tfoot-row">
-				<td colspan="5">${__("Total")}</td>
+				<td colspan="6">${__("Total")}</td>
 				<td class="mf-r">${format_currency(total_row.grand_total)}</td>
 				<td class="mf-r">${format_currency(total_row.paid)}</td>
 				<td class="mf-r">${format_currency(total_row.outstanding_amount)}</td>
@@ -362,6 +457,7 @@ class MonitorFacturas {
 		this.$body.find("#mf-month, #mf-from, #mf-to").val("");
 		this.customer_control.set_value("");
 		this.fiscal_year_control.set_value("");
+		this._clear_selection();
 		this.$body.find("#mf-summary, #mf-tbl-wrap, #mf-empty").hide();
 		this.search();
 	}
@@ -835,6 +931,14 @@ function _mf_styles() {
 .mf-card-val { font-size: 20px; font-weight: 700; color: var(--text-color); }
 .mf-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
+/* ── Selection bar ─── */
+.mf-selbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+	background: var(--alert-bg, #eef2ff); border: 1px solid var(--primary); border-radius: 8px;
+	padding: 9px 14px; margin-bottom: 12px; font-size: 13px; }
+.mf-selbar #mf-sel-count { font-weight: 700; color: var(--primary); }
+.mf-selbar-item strong { font-variant-numeric: tabular-nums; }
+.mf-selbar #mf-sel-clear { margin-left: auto; }
+
 /* ── Table ─── */
 .mf-tbl-wrap { border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; }
 .mf-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -844,7 +948,12 @@ function _mf_styles() {
 	border-bottom: 1px solid var(--border-color); white-space: nowrap; }
 .mf-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
 .mf-tbl tbody tr:last-child td { border-bottom: none; }
+.mf-tbl tbody tr { cursor: pointer; }
 .mf-tbl tbody tr:hover { background: var(--subtle-fg); }
+.mf-tbl tbody tr.mf-selected { background: var(--alert-bg, #eef2ff); }
+.mf-tbl tbody tr.mf-selected:hover { background: var(--alert-bg, #e0e7ff); }
+.mf-tbl .mf-chk { width: 34px; padding-left: 14px; padding-right: 0; cursor: default; }
+.mf-tbl .mf-chk input { margin: 0; cursor: pointer; }
 .mf-tfoot-row td { padding: 10px 12px; font-weight: 700; color: var(--text-color);
 	background: var(--subtle-fg); border-top: 2px solid var(--border-color); border-bottom: none; }
 .mf-r { text-align: right; font-variant-numeric: tabular-nums; }
@@ -866,10 +975,11 @@ function _mf_styles() {
 .mf-print-letterhead { display: none; }
 @media print {
 	.navbar, .page-head, .page-actions, .standard-sidebar, .body-sidebar,
-	.mf-tabs, .mf-filters { display: none !important; }
+	.mf-tabs, .mf-filters, .mf-selbar { display: none !important; }
 	.mf-wrap { padding: 0; }
 	.mf-print-letterhead { display: block; margin-bottom: 14px; }
 	.mf-tbl th:last-child, .mf-tbl td:last-child { display: none; }
+	.mf-tbl .mf-chk { display: none !important; }
 	.mf-summary { break-inside: avoid; }
 	.mf-tbl-wrap { border: none; }
 }
