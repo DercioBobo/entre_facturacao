@@ -7,7 +7,7 @@ app_license = "MIT"
 required_apps = ["frappe", "erpnext"]
 
 # app_include_css = "/assets/entre_facturacao/css/entre_facturacao.css"
-# app_include_js = "/assets/entre_facturacao/js/entre_facturacao.js"
+app_include_js = "/assets/entre_facturacao/js/quick_payment_entry.js"
 
 doctype_js = {
     "Sales Invoice": "public/js/sales_invoice.js",

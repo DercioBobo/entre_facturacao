@@ -1,4 +1,14 @@
 frappe.ui.form.on("Sales Invoice", {
+	refresh(frm) {
+		if (frm.doc.docstatus === 1 && flt(frm.doc.outstanding_amount) > 0) {
+			frm.add_custom_button(__("Pagamento Rápido"), () => {
+				entre_facturacao.quick_payment.open(frm.doc.name, {
+					on_done: () => frm.reload_doc(),
+				});
+			}).addClass("btn-primary");
+		}
+	},
+
 	on_submit(frm) {
 		if (frm.doc.auto_repeat) return;
 

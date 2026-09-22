@@ -276,6 +276,11 @@ class MonitorFacturas {
 			const $chk = $(e.currentTarget);
 			this._toggle_row_selection($chk.closest("tr"), $chk.is(":checked"));
 		});
+		this.$body.find("#mf-tbody").on("click", "a.mf-pay-link", (e) => {
+			e.preventDefault();
+			const invoice = $(e.currentTarget).data("invoice");
+			entre_facturacao.quick_payment.open(invoice, { on_done: () => this.search() });
+		});
 		this.$body.find("#mf-sel-clear").on("click", () => this._clear_selection());
 
 		this._init_default_fiscal_year(
@@ -424,6 +429,11 @@ class MonitorFacturas {
 				<td>
 					<a href="/app/sales-invoice/${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Abrir factura")}">↗</a>
 					<a href="/app/query-report/Extrato%20da%20Factura?factura=${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Extrato da Factura")}">Σ</a>
+					${
+						r.display_status === "Em Dívida" || r.display_status === "Vencida"
+							? `<a href="#" class="mf-link mf-pay-link" data-invoice="${frappe.utils.escape_html(r.invoice)}" title="${__("Registar Pagamento")}">€</a>`
+							: ""
+					}
 				</td>
 			</tr>`
 			)
