@@ -427,11 +427,11 @@ class MonitorFacturas {
 				<td class="mf-r">${format_currency(r.outstanding_amount)}</td>
 				<td><span class="mf-b ${BADGE[r.display_status] || ""}">${r.display_status}</span></td>
 				<td class="mf-actions">
-					<a href="/app/sales-invoice/${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Abrir factura")}">↗</a>
-					<a href="/app/query-report/Extrato%20da%20Factura?factura=${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Extrato da Factura")}">Σ</a>
+					<a href="/app/sales-invoice/${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Abrir factura")}"><i class="fa fa-fw fa-external-link"></i></a>
+					<a href="/app/query-report/Extrato%20da%20Factura?factura=${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Extrato da Factura")}"><i class="fa fa-fw fa-list-alt"></i></a>
 					${
 						r.display_status === "Em Dívida" || r.display_status === "Vencida"
-							? `<a href="#" class="mf-link mf-link--pay mf-pay-link" data-invoice="${frappe.utils.escape_html(r.invoice)}" title="${__("Registar Pagamento")}">€</a>`
+							? `<a href="#" class="mf-link mf-link--pay mf-pay-link" data-invoice="${frappe.utils.escape_html(r.invoice)}" title="${__("Registar Pagamento")}"><i class="fa fa-fw fa-credit-card"></i></a>`
 							: ""
 					}
 				</td>
@@ -750,7 +750,7 @@ class MonitorFacturas {
 						data-auto-repeat="${r.auto_repeat}"
 						data-disabled="${r.disabled ? 1 : 0}"
 					>${r.disabled ? __("Activar") : __("Pausar")}</button>
-					<a href="/app/auto-repeat/${encodeURIComponent(r.auto_repeat)}" target="_blank" class="mf-link" title="${__("Editar repetição automática")}">✎</a>
+					<a href="/app/auto-repeat/${encodeURIComponent(r.auto_repeat)}" target="_blank" class="mf-link" title="${__("Editar repetição automática")}"><i class="fa fa-fw fa-pencil"></i></a>
 				</td>
 			</tr>`
 			)
@@ -974,10 +974,10 @@ function _mf_styles() {
 .mf-b--grey   { background: #e5e7eb; color: #374151; }
 .mf-actions { white-space: nowrap; display: flex; align-items: center; gap: 2px; }
 .mf-link { display: inline-flex; align-items: center; justify-content: center;
-	width: 26px; height: 26px; border-radius: 6px; font-size: 14px; line-height: 1;
+	width: 26px; height: 26px; border-radius: 6px; font-size: 13px; line-height: 1;
 	color: var(--text-muted); text-decoration: none; }
 .mf-link:hover { color: var(--primary); background: var(--subtle-fg); text-decoration: none; }
-.mf-link--pay { color: #059669; font-weight: 700; }
+.mf-link--pay { color: #059669; }
 .mf-link--pay:hover { color: #047857; background: #dcfce7; }
 .mf-toggle-btn { font-size: 11px; padding: 2px 9px; height: auto; line-height: 1.4; }
 .mf-toggle-btn + .mf-link { margin-left: 8px; }
