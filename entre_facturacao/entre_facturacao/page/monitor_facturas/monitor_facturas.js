@@ -426,7 +426,7 @@ class MonitorFacturas {
 				<td class="mf-r">${format_currency(r.paid)}</td>
 				<td class="mf-r">${format_currency(r.outstanding_amount)}</td>
 				<td><span class="mf-b ${BADGE[r.display_status] || ""}">${r.display_status}</span></td>
-				<td class="mf-actions">
+				<td><div class="mf-actions">
 					<a href="/app/sales-invoice/${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Abrir factura")}"><i class="fa fa-fw fa-external-link"></i></a>
 					<a href="/app/query-report/Extrato%20da%20Factura?factura=${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Extrato da Factura")}"><i class="fa fa-fw fa-list-alt"></i></a>
 					${
@@ -434,7 +434,7 @@ class MonitorFacturas {
 							? `<a href="#" class="mf-link mf-link--pay mf-pay-link" data-invoice="${frappe.utils.escape_html(r.invoice)}" title="${__("Registar Pagamento")}"><i class="fa fa-fw fa-credit-card"></i></a>`
 							: ""
 					}
-				</td>
+				</div></td>
 			</tr>`
 			)
 			.join("");
