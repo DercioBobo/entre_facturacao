@@ -141,6 +141,7 @@ class MonitorFacturas {
 				<span class="mf-selbar-item">${__("Total")}: <strong id="mf-sel-total">—</strong></span>
 				<span class="mf-selbar-item">${__("Pago")}: <strong id="mf-sel-paid">—</strong></span>
 				<span class="mf-selbar-item">${__("Em Dívida")}: <strong id="mf-sel-outstanding">—</strong></span>
+				<button type="button" class="btn btn-xs btn-success" id="mf-sel-pay" style="display:none">${__("Registar Pagamento")}</button>
 				<button type="button" class="btn btn-xs btn-default" id="mf-sel-clear">${__("Limpar selecção")}</button>
 			</div>
 
@@ -282,6 +283,16 @@ class MonitorFacturas {
 			entre_facturacao.quick_payment.open(invoice, { on_done: () => this.search() });
 		});
 		this.$body.find("#mf-sel-clear").on("click", () => this._clear_selection());
+		this.$body.find("#mf-sel-pay").on("click", () => {
+			const invoices = this._selected_payable_rows().map((r) => r.invoice);
+			if (!invoices.length) return;
+			entre_facturacao.quick_payment.open_bulk(invoices, {
+				on_done: () => {
+					this._clear_selection();
+					this.search();
+				},
+			});
+		});
 
 		this._init_default_fiscal_year(
 			this.company_control.get_value(),
@@ -341,7 +352,27 @@ class MonitorFacturas {
 		$bar.find("#mf-sel-total").text(format_currency(totals.grand_total));
 		$bar.find("#mf-sel-paid").text(format_currency(totals.paid));
 		$bar.find("#mf-sel-outstanding").text(format_currency(totals.outstanding_amount));
+
+		const payable_rows = this._selected_payable_rows();
+		const customers = new Set(payable_rows.map((r) => r.customer));
+		const $payBtn = $bar.find("#mf-sel-pay");
+		if (!payable_rows.length) {
+			$payBtn.hide();
+		} else if (customers.size === 1) {
+			$payBtn.show().prop("disabled", false).attr("title", "");
+		} else {
+			$payBtn
+				.show()
+				.prop("disabled", true)
+				.attr("title", __("Seleccione facturas do mesmo cliente para registar um pagamento conjunto."));
+		}
 		$bar.show();
+	}
+
+	_selected_payable_rows() {
+		return this._current_rows.filter(
+			(r) => this._selected.has(r.invoice) && Number(r.outstanding_amount) > 0
+		);
 	}
 
 	_get_selected_statuses() {
