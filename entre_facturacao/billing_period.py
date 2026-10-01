@@ -19,7 +19,7 @@ from datetime import date
 
 import frappe
 from frappe import _
-from frappe.utils import add_months, cint, formatdate, get_first_day, get_last_day, getdate, today
+from frappe.utils import add_days, add_months, cint, date_diff, formatdate, get_first_day, get_last_day, getdate, today
 from jinja2 import meta
 
 MESES = [
@@ -281,9 +281,39 @@ def apply_billing_period(doc, reference_doc, ar):
 	return new
 
 
+def apply_payment_terms(doc, reference_doc, ar):
+	"""Give the new invoice a due date. due_date, payment_terms_template and
+	payment_schedule are no_copy, and ERPNext's own on_recurring clears
+	due_date, so without this it falls back to the customer's default terms,
+	or to the posting date when there are none.
+
+	In order: the Auto Repeat's Prazo de Pagamento (dias); the template
+	invoice's Payment Terms Template (ERPNext rebuilds due date and schedule
+	from it); the template invoice's gap between posting and due date.
+	"""
+	days = cint(ar.get("payment_days")) if ar else 0
+	if days > 0:
+		doc.due_date = add_days(doc.posting_date, days)
+		return
+
+	if reference_doc.get("payment_terms_template"):
+		doc.payment_terms_template = reference_doc.payment_terms_template
+		doc.due_date = None
+		return
+
+	if reference_doc.get("due_date") and reference_doc.get("posting_date"):
+		days = date_diff(reference_doc.due_date, reference_doc.posting_date)
+		if days > 0:
+			doc.due_date = add_days(doc.posting_date, days)
+
+
 def on_recurring(doc, method=None, reference_doc=None, auto_repeat_doc=None):
 	"""doc_events hook: Auto Repeat calls this on the new invoice before it is
-	inserted (and submitted, if Submit on Creation is set)."""
+	inserted (and submitted, if Submit on Creation is set). Runs after
+	ERPNext's SalesInvoice.on_recurring."""
+	if reference_doc:
+		apply_payment_terms(doc, reference_doc, auto_repeat_doc)
+
 	if auto_repeat_doc and auto_repeat_doc.get("billing_mode"):
 		apply_billing_period(doc, reference_doc, auto_repeat_doc)
 	else:
@@ -364,6 +394,18 @@ def preview_next_invoice(doc):
 	new_doc = frappe.copy_doc(reference_doc)
 	new_doc.posting_date = getdate(ar.next_schedule_date or ar.start_date or today())
 
+	apply_payment_terms(new_doc, reference_doc, ar)
+	if not new_doc.due_date:
+		from erpnext.accounts.party import get_due_date
+
+		new_doc.due_date = get_due_date(
+			new_doc.posting_date,
+			"Customer",
+			new_doc.customer,
+			new_doc.company,
+			template_name=new_doc.get("payment_terms_template"),
+		)
+
 	try:
 		period = apply_billing_period(new_doc, reference_doc, ar)
 	except Exception as e:
@@ -375,6 +417,7 @@ def preview_next_invoice(doc):
 		return None
 	return {
 		"posting_date": new_doc.posting_date,
+		"due_date": new_doc.due_date,
 		"periodo": period_label(period),
 		"start": period.start,
 		"end": period.end,

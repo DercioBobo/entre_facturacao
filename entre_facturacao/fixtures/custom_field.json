@@ -77,11 +77,22 @@
   "options": "\nAntecipado\nVencido"
  },
  {
+  "description": "Dias entre a data da factura e a data de vencimento (ex.: 30). Vazio: usa os Termos de Pagamento da factura modelo, ou o mesmo prazo que ela teve, ou os termos do cliente.",
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "payment_days",
+  "fieldtype": "Int",
+  "insert_after": "billing_mode",
+  "label": "Prazo de Pagamento (dias)",
+  "name": "Auto Repeat-payment_days",
+  "non_negative": 1
+ },
+ {
   "doctype": "Custom Field",
   "dt": "Auto Repeat",
   "fieldname": "billing_column_break",
   "fieldtype": "Column Break",
-  "insert_after": "billing_mode",
+  "insert_after": "payment_days",
   "name": "Auto Repeat-billing_column_break"
  },
  {

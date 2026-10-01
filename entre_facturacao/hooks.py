@@ -56,6 +56,7 @@ fixtures = [
                     "billing_period_end",
                     "billing_section",
                     "billing_mode",
+                    "payment_days",
                     "billing_column_break",
                     "title_template",
                     "billing_descriptions_section",

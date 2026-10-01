@@ -161,6 +161,7 @@ entre_facturacao.billing_period = {
 			<div style="border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 12px;">
 				<div class="text-muted small">
 					${__("Próxima factura")}: <b>${frappe.datetime.str_to_user(p.posting_date)}</b>
+					· ${__("Vencimento")}: <b>${p.due_date ? frappe.datetime.str_to_user(p.due_date) : "—"}</b>
 					· ${__("Período")}: <b>${esc(p.periodo)}</b>
 					(${frappe.datetime.str_to_user(p.start)} – ${frappe.datetime.str_to_user(p.end)})
 				</div>
