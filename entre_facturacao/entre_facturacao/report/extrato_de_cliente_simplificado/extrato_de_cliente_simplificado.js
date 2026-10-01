@@ -45,6 +45,10 @@ frappe.query_reports["Extrato de Cliente Simplificado"] = {
 
 		if (!data) return value;
 
+		if (data.is_total_row) {
+			return value ? `<b>${value}</b>` : value;
+		}
+
 		if (column.fieldname === "estado" && data.estado === __("Vencida")) {
 			value = `<span style="color: var(--red-600, #c0392b); font-weight: 600;">${value}</span>`;
 		}

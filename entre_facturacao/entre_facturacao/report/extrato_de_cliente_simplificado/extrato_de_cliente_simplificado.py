@@ -13,7 +13,21 @@ def execute(filters=None):
 	if not filters.get("cliente"):
 		return columns, []
 	data = get_data(filters)
+	if data:
+		data.append(get_total_row(data))
 	return columns, data
+
+
+def get_total_row(linhas):
+	"""Total row built here rather than via the Report's Add Total Row, so it
+	does not depend on that setting being synced to the site."""
+	return {
+		"descricao": _("Total"),
+		"valor_factura": flt(sum(l["valor_factura"] for l in linhas)),
+		"valor_pago": flt(sum(l["valor_pago"] for l in linhas)),
+		"saldo_factura": flt(sum(l["saldo_factura"] for l in linhas)),
+		"is_total_row": 1,
+	}
 
 
 def get_columns():
