@@ -30,5 +30,110 @@
   "insert_after": "items_section",
   "label": "Título",
   "name": "Sales Invoice-invoice_title"
+ },
+ {
+  "collapsible": 0,
+  "depends_on": "eval:doc.billing_period_start",
+  "description": "Período que esta factura cobra. Preenchido pela repetição automática ou pelo botão Período de Facturação.",
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "billing_period_start",
+  "fieldtype": "Date",
+  "insert_after": "invoice_title",
+  "label": "Período de Facturação: Início",
+  "name": "Sales Invoice-billing_period_start",
+  "read_only": 1
+ },
+ {
+  "depends_on": "eval:doc.billing_period_start",
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "billing_period_end",
+  "fieldtype": "Date",
+  "insert_after": "billing_period_start",
+  "label": "Período de Facturação: Fim",
+  "name": "Sales Invoice-billing_period_end",
+  "read_only": 1
+ },
+ {
+  "depends_on": "eval:doc.reference_doctype=='Sales Invoice'",
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "billing_section",
+  "fieldtype": "Section Break",
+  "insert_after": "next_schedule_date",
+  "label": "Período de Facturação",
+  "name": "Auto Repeat-billing_section"
+ },
+ {
+  "description": "Antecipado: factura o período corrente (em Outubro factura Outubro). Vencido: factura o período anterior (em Outubro factura Setembro). Vazio: título e descrições são copiados sem alterações.",
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "billing_mode",
+  "fieldtype": "Select",
+  "insert_after": "billing_section",
+  "label": "Modo de Facturação",
+  "name": "Auto Repeat-billing_mode",
+  "options": "\nAntecipado\nVencido"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "billing_column_break",
+  "fieldtype": "Column Break",
+  "insert_after": "billing_mode",
+  "name": "Auto Repeat-billing_column_break"
+ },
+ {
+  "depends_on": "eval:doc.reference_doctype=='Sales Invoice' && doc.billing_mode",
+  "description": "Ex.: Avença de {{ periodo }}. Vazio: o mês no título da factura modelo é actualizado automaticamente.",
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "title_template",
+  "fieldtype": "Data",
+  "insert_after": "billing_column_break",
+  "label": "Modelo do Título",
+  "name": "Auto Repeat-title_template"
+ },
+ {
+  "depends_on": "eval:doc.reference_doctype=='Sales Invoice' && doc.billing_mode",
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "billing_descriptions_section",
+  "fieldtype": "Section Break",
+  "insert_after": "title_template",
+  "name": "Auto Repeat-billing_descriptions_section"
+ },
+ {
+  "depends_on": "eval:doc.reference_doctype=='Sales Invoice' && doc.billing_mode",
+  "description": "Uma linha por item da factura modelo. Itens sem modelo têm o mês da descrição actualizado automaticamente. Use o botão Período de Facturação > Copiar descrições da factura modelo.",
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "billing_descriptions",
+  "fieldtype": "Table",
+  "insert_after": "billing_descriptions_section",
+  "label": "Modelos das Descrições",
+  "name": "Auto Repeat-billing_descriptions",
+  "options": "Auto Repeat Descricao"
+ },
+ {
+  "collapsible": 1,
+  "depends_on": "eval:doc.reference_doctype=='Sales Invoice' && doc.billing_mode",
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "billing_preview_section",
+  "fieldtype": "Section Break",
+  "insert_after": "billing_descriptions",
+  "label": "Pré-visualização da Próxima Factura",
+  "name": "Auto Repeat-billing_preview_section"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "billing_preview",
+  "fieldtype": "HTML",
+  "insert_after": "billing_preview_section",
+  "label": "Pré-visualização",
+  "name": "Auto Repeat-billing_preview"
  }
 ]

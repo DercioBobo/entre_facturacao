@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "creation": "2026-10-01 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_idx",
+  "item_code",
+  "description_template"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "description": "Posição do item na factura modelo (1 = primeira linha).",
+   "fieldname": "item_idx",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Linha",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "columns": 7,
+   "description": "Variáveis: {{ periodo }} (ex.: Setembro 2026), {{ mes }}, {{ ano }}, {{ mes_fim }}, {{ ano_fim }}, {{ data_inicio }}, {{ data_fim }}, {{ item_name }}. Use {{ mes|upper }} para maiúsculas.",
+   "fieldname": "description_template",
+   "fieldtype": "Text Editor",
+   "in_list_view": 1,
+   "label": "Modelo da Descrição"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "Auto Repeat Descricao",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

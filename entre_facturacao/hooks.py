@@ -11,6 +11,16 @@ app_include_js = "/assets/entre_facturacao/js/quick_payment_entry.js"
 
 doctype_js = {
     "Sales Invoice": "public/js/sales_invoice.js",
+    "Auto Repeat": "public/js/auto_repeat.js",
+}
+
+doc_events = {
+    "Sales Invoice": {
+        "on_recurring": "entre_facturacao.billing_period.on_recurring",
+    },
+    "Auto Repeat": {
+        "validate": "entre_facturacao.billing_period.validate_auto_repeat",
+    },
 }
 
 extend_bootinfo = "entre_facturacao.boot.boot_session"
@@ -34,8 +44,26 @@ fixtures = [
     {
         "doctype": "Custom Field",
         "filters": [
-            ["dt", "=", "Sales Invoice"],
-            ["fieldname", "in", ["custom_signature_section", "custom_print_signature", "invoice_title"]],
+            ["dt", "in", ["Sales Invoice", "Auto Repeat"]],
+            [
+                "fieldname",
+                "in",
+                [
+                    "custom_signature_section",
+                    "custom_print_signature",
+                    "invoice_title",
+                    "billing_period_start",
+                    "billing_period_end",
+                    "billing_section",
+                    "billing_mode",
+                    "billing_column_break",
+                    "title_template",
+                    "billing_descriptions_section",
+                    "billing_descriptions",
+                    "billing_preview_section",
+                    "billing_preview",
+                ],
+            ],
         ],
     },
 ]

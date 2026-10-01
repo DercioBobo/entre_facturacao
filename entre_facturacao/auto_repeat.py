@@ -2,43 +2,71 @@ import frappe
 from frappe import _
 from frappe.utils import add_months, cint, get_first_day, get_last_day, getdate
 
+from entre_facturacao.billing_period import period_for_schedule, period_label, periods_overlap
+
 
 @frappe.whitelist()
 def get_conflicting_auto_repeat(sales_invoice):
 	"""Find an active, Monthly Auto Repeat for the same customer whose next
-	invoice is scheduled within the same month as the given Sales Invoice.
+	invoice bills the same period as the given Sales Invoice.
 
 	Used to warn a user who manually creates an invoice that an automatic
-	one is also due this month, so they can skip the duplicate.
+	one is also due for that period, so they can skip the duplicate.
+
+	When both sides know their billing period (the invoice has
+	billing_period_start, the Auto Repeat has a Modo de Facturação), the
+	periods are compared; otherwise it falls back to comparing the invoice's
+	posting month with the Auto Repeat's schedule month.
 	"""
 	if not frappe.has_permission("Sales Invoice", "read", doc=sales_invoice):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	si = frappe.db.get_value(
-		"Sales Invoice", sales_invoice, ["customer", "posting_date", "auto_repeat"], as_dict=True
+		"Sales Invoice",
+		sales_invoice,
+		["customer", "posting_date", "auto_repeat", "billing_period_start", "billing_period_end"],
+		as_dict=True,
 	)
 	if not si or si.auto_repeat:
 		return None
 
-	month_start = get_first_day(si.posting_date)
-	month_end = get_last_day(si.posting_date)
-
 	rows = frappe.db.sql(
 		"""
-		SELECT ar.name, ar.next_schedule_date
+		SELECT ar.name, ar.next_schedule_date, ar.frequency, ar.billing_mode
 		FROM `tabAuto Repeat` ar
 		INNER JOIN `tabSales Invoice` ref ON ref.name = ar.reference_document
 		WHERE ar.reference_doctype = 'Sales Invoice'
 		  AND ar.disabled = 0
 		  AND ar.frequency = 'Monthly'
 		  AND ref.customer = %(customer)s
-		  AND ar.next_schedule_date BETWEEN %(start)s AND %(end)s
-		LIMIT 1
+		  AND ar.next_schedule_date IS NOT NULL
+		ORDER BY ar.next_schedule_date
 		""",
-		{"customer": si.customer, "start": month_start, "end": month_end},
+		{"customer": si.customer},
 		as_dict=True,
 	)
-	return rows[0] if rows else None
+
+	si_period = None
+	if si.billing_period_start:
+		si_period = frappe._dict(
+			start=getdate(si.billing_period_start),
+			end=getdate(si.billing_period_end or si.billing_period_start),
+		)
+	month_start = get_first_day(si.posting_date)
+	month_end = get_last_day(si.posting_date)
+
+	for row in rows:
+		ar_period = period_for_schedule(row.next_schedule_date, row.frequency, row.billing_mode)
+		if si_period and row.billing_mode and ar_period:
+			if periods_overlap(si_period, ar_period):
+				return {
+					"name": row.name,
+					"next_schedule_date": row.next_schedule_date,
+					"periodo": period_label(ar_period),
+				}
+		elif month_start <= getdate(row.next_schedule_date) <= month_end:
+			return {"name": row.name, "next_schedule_date": row.next_schedule_date}
+	return None
 
 
 @frappe.whitelist()

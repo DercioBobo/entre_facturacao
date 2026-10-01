@@ -6,6 +6,8 @@ from frappe.utils import cint, flt, formatdate, getdate, now_datetime, today
 from frappe.utils.pdf import get_pdf
 from frappe.utils.xlsxutils import make_xlsx
 
+from entre_facturacao.billing_period import predict_title
+
 FREQ_LABELS = {
 	"Daily": "Diária",
 	"Weekly": "Semanal",
@@ -153,9 +155,13 @@ def _query_upcoming(from_date=None, to_date=None, customer=None, status=None, co
 			ar.frequency,
 			ar.disabled,
 			ar.end_date,
+			ar.billing_mode,
+			ar.title_template,
 			si.customer,
 			si.customer_name,
 			si.invoice_title,
+			si.posting_date          AS ref_posting_date,
+			si.billing_period_start  AS ref_period_start,
 			si.grand_total
 		FROM `tabAuto Repeat` ar
 		INNER JOIN `tabSales Invoice` si ON si.name = ar.reference_document
@@ -169,6 +175,8 @@ def _query_upcoming(from_date=None, to_date=None, customer=None, status=None, co
 
 	today_date = getdate(today_val)
 	for r in rows:
+		# Show the title the next invoice will get, not the template's.
+		r.invoice_title = predict_title(r)
 		if r.disabled:
 			r.display_status = "Desactivado"
 		elif r.end_date and getdate(r.end_date) < today_date:
