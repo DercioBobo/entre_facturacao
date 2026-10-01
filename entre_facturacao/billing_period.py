@@ -379,6 +379,11 @@ def preview_next_invoice(doc):
 		"start": period.start,
 		"end": period.end,
 		"invoice_title": new_doc.invoice_title,
+		"context": {
+			**period_context(period),
+			"item_name": new_doc.items[0].item_name if new_doc.items else "",
+			"item_code": new_doc.items[0].item_code if new_doc.items else "",
+		},
 		"items": [
 			{"idx": idx, "item_code": item.item_code, "description": item.description}
 			for idx, item in enumerate(new_doc.items, 1)

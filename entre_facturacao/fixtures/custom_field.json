@@ -106,12 +106,22 @@
  },
  {
   "depends_on": "eval:doc.reference_doctype=='Sales Invoice' && doc.billing_mode",
+  "doctype": "Custom Field",
+  "dt": "Auto Repeat",
+  "fieldname": "billing_variables_help",
+  "fieldtype": "HTML",
+  "insert_after": "billing_descriptions_section",
+  "label": "Variáveis disponíveis",
+  "name": "Auto Repeat-billing_variables_help"
+ },
+ {
+  "depends_on": "eval:doc.reference_doctype=='Sales Invoice' && doc.billing_mode",
   "description": "Uma linha por item da factura modelo. Itens sem modelo têm o mês da descrição actualizado automaticamente. Use o botão Período de Facturação > Copiar descrições da factura modelo.",
   "doctype": "Custom Field",
   "dt": "Auto Repeat",
   "fieldname": "billing_descriptions",
   "fieldtype": "Table",
-  "insert_after": "billing_descriptions_section",
+  "insert_after": "billing_variables_help",
   "label": "Modelos das Descrições",
   "name": "Auto Repeat-billing_descriptions",
   "options": "Auto Repeat Descricao"

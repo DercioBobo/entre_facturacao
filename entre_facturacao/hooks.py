@@ -59,6 +59,7 @@ fixtures = [
                     "billing_column_break",
                     "title_template",
                     "billing_descriptions_section",
+                    "billing_variables_help",
                     "billing_descriptions",
                     "billing_preview_section",
                     "billing_preview",

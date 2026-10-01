@@ -51,6 +51,64 @@ entre_facturacao.billing_period = {
 		}
 	},
 
+	VARIABLES: [
+		["periodo", "Período completo"],
+		["mes", "Mês (início do período)"],
+		["ano", "Ano (início do período)"],
+		["mes_fim", "Último mês do período"],
+		["ano_fim", "Ano do último mês"],
+		["data_inicio", "Data de início"],
+		["data_fim", "Data de fim"],
+		["item_name", "Nome do item (só nas descrições)"],
+		["item_code", "Código do item (só nas descrições)"],
+	],
+
+	render_variables_help(frm, context) {
+		const field = frm.get_field("billing_variables_help");
+		if (!field) return;
+		const esc = frappe.utils.escape_html;
+		const ctx = context || {};
+
+		const rows = this.VARIABLES.map(([name, label]) => {
+			const tag = `{{ ${name} }}`;
+			const example = ctx[name] !== undefined && ctx[name] !== "" ? esc(String(ctx[name])) : "—";
+			return `
+				<tr>
+					<td style="white-space: nowrap;">
+						<code class="ef-var" data-var="${esc(tag)}" style="cursor: pointer;"
+							title="${__("Clique para copiar")}">${esc(tag)}</code>
+					</td>
+					<td>${__(label)}</td>
+					<td class="text-muted">${example}</td>
+				</tr>`;
+		}).join("");
+
+		field.$wrapper.html(`
+			<div class="small">
+				<table class="table table-sm table-bordered" style="margin-bottom: 6px;">
+					<thead>
+						<tr>
+							<th>${__("Variável")}</th>
+							<th>${__("Significado")}</th>
+							<th>${__("Próxima factura")}</th>
+						</tr>
+					</thead>
+					<tbody>${rows}</tbody>
+				</table>
+				<div class="text-muted">
+					${__("Clique numa variável para a copiar e cole-a no modelo.")}
+					${__("Maiúsculas/minúsculas")}: <code>{{ mes|upper }}</code> → ${esc(
+						(ctx.mes || "Setembro").toUpperCase()
+					)},
+					<code>{{ mes|lower }}</code> → ${esc((ctx.mes || "Setembro").toLowerCase())}.
+				</div>
+			</div>`);
+
+		field.$wrapper.find(".ef-var").on("click", (e) => {
+			frappe.utils.copy_to_clipboard($(e.currentTarget).attr("data-var"));
+		});
+	},
+
 	render_preview(frm) {
 		const field = frm.get_field("billing_preview");
 		if (!field) return;
@@ -58,13 +116,21 @@ entre_facturacao.billing_period = {
 			field.$wrapper.empty();
 			return;
 		}
+		// Static list right away; example values fill in with the preview.
+		const help = frm.get_field("billing_variables_help");
+		if (help && !help.$wrapper.children().length) this.render_variables_help(frm);
 
 		clearTimeout(this._preview_timer);
 		this._preview_timer = setTimeout(() => {
 			frappe.call({
 				method: "entre_facturacao.billing_period.preview_next_invoice",
 				args: { doc: frm.doc },
-				callback: (r) => field.$wrapper.html(this.preview_html(r.message)),
+				callback: (r) => {
+					field.$wrapper.html(this.preview_html(r.message));
+					if (r.message && r.message.context) {
+						this.render_variables_help(frm, r.message.context);
+					}
+				},
 				error: () =>
 					field.$wrapper.html(
 						`<div class="text-muted">${__("Não foi possível gerar a pré-visualização. Verifique os modelos.")}</div>`
