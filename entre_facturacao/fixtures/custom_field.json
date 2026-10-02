@@ -156,18 +156,5 @@
   "insert_after": "billing_preview_section",
   "label": "Pré-visualização",
   "name": "Auto Repeat-billing_preview"
- },
- {
-  "doctype": "Custom Field",
-  "dt": "Sales Invoice",
-  "fieldname": "agenda_de_factura",
-  "fieldtype": "Link",
-  "insert_after": "billing_period_end",
-  "label": "Agenda de Factura",
-  "name": "Sales Invoice-agenda_de_factura",
-  "no_copy": 1,
-  "options": "Agenda de Factura",
-  "read_only": 1,
-  "depends_on": "eval:doc.agenda_de_factura"
  }
 ]

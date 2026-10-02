@@ -23,6 +23,10 @@ doc_events = {
     },
 }
 
+# Custom fields that link to this app's own doctypes (see setup.py).
+after_install = "entre_facturacao.setup.create_custom_fields"
+after_migrate = "entre_facturacao.setup.create_custom_fields"
+
 extend_bootinfo = "entre_facturacao.boot.boot_session"
 
 jinja = {
@@ -64,7 +68,6 @@ fixtures = [
                     "billing_descriptions",
                     "billing_preview_section",
                     "billing_preview",
-                    "agenda_de_factura",
                 ],
             ],
         ],
