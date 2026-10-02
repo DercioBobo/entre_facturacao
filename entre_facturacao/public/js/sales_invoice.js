@@ -85,6 +85,102 @@ entre_facturacao.manual_period = {
 	},
 };
 
+frappe.provide("entre_facturacao.invoice_repeat");
+
+entre_facturacao.invoice_repeat = {
+	MONTHS: { Monthly: 1, Quarterly: 3, "Half-yearly": 6, Yearly: 12 },
+
+	// First cycle after the invoice's date that isn't in the past.
+	default_start(frm, frequency) {
+		const months = this.MONTHS[frequency] || 1;
+		const today = frappe.datetime.get_today();
+		let date = frm.doc.posting_date || today;
+		do {
+			date = frappe.datetime.add_months(date, months);
+		} while (date < today);
+		return date;
+	},
+
+	// Create an Auto Repeat that uses this invoice as its template.
+	open(frm) {
+		const d = new frappe.ui.Dialog({
+			title: __("Criar Repetição Automática"),
+			fields: [
+				{
+					fieldname: "frequency",
+					fieldtype: "Select",
+					label: __("Frequência"),
+					options: [
+						{ label: __("Mensal"), value: "Monthly" },
+						{ label: __("Trimestral"), value: "Quarterly" },
+						{ label: __("Semestral"), value: "Half-yearly" },
+						{ label: __("Anual"), value: "Yearly" },
+					],
+					default: "Monthly",
+					reqd: 1,
+					onchange: () => d.set_value("start_date", this.default_start(frm, d.get_value("frequency"))),
+				},
+				{
+					fieldname: "start_date",
+					fieldtype: "Date",
+					label: __("Primeira factura em"),
+					default: this.default_start(frm, "Monthly"),
+					reqd: 1,
+				},
+				{ fieldname: "end_date", fieldtype: "Date", label: __("Data de fim") },
+				{ fieldtype: "Column Break" },
+				{
+					fieldname: "billing_mode",
+					fieldtype: "Select",
+					label: __("Modo de Facturação"),
+					options: ["", "Antecipado", "Vencido"],
+					default: "Antecipado",
+					description: __(
+						"Antecipado: factura o período corrente. Vencido: factura o período anterior. Vazio: título e descrições copiados sem alterações."
+					),
+				},
+				{
+					fieldname: "payment_days",
+					fieldtype: "Int",
+					label: __("Prazo de Pagamento (dias)"),
+					description: __("Vazio: usa o mesmo prazo desta factura."),
+				},
+				{ fieldtype: "Section Break" },
+				{ fieldname: "submit_on_creation", fieldtype: "Check", label: __("Submeter automaticamente") },
+				{ fieldname: "notify_by_email", fieldtype: "Check", label: __("Enviar por email") },
+				{
+					fieldname: "recipients",
+					fieldtype: "Small Text",
+					label: __("Destinatários"),
+					default: frm.doc.contact_email || "",
+					depends_on: "notify_by_email",
+					mandatory_depends_on: "notify_by_email",
+				},
+			],
+			primary_action_label: __("Criar"),
+			primary_action: (values) => {
+				frappe.call({
+					method: "entre_facturacao.auto_repeat.create_auto_repeat_from_invoice",
+					args: { sales_invoice: frm.doc.name, ...values },
+					freeze: true,
+					callback: (r) => {
+						if (!r.message) return;
+						d.hide();
+						frappe.show_alert({
+							message: __("Repetição automática criada. Primeira factura: {0}. Verifique os modelos e a pré-visualização.", [
+								frappe.datetime.str_to_user(r.message.next_schedule_date),
+							]),
+							indicator: "green",
+						});
+						frappe.set_route("Form", "Auto Repeat", r.message.name);
+					},
+				});
+			},
+		});
+		d.show();
+	},
+};
+
 frappe.ui.form.on("Sales Invoice", {
 	refresh(frm) {
 		if (frm.doc.docstatus === 1 && flt(frm.doc.outstanding_amount) > 0) {
@@ -97,6 +193,16 @@ frappe.ui.form.on("Sales Invoice", {
 
 		if (frm.doc.docstatus === 0) {
 			frm.add_custom_button(__("Período de Facturação"), () => entre_facturacao.manual_period.open(frm));
+		}
+
+		if (frm.doc.docstatus === 1 && !frm.doc.is_return) {
+			if (frm.doc.auto_repeat) {
+				frm.add_custom_button(__("Repetição Automática"), () =>
+					frappe.set_route("Form", "Auto Repeat", frm.doc.auto_repeat)
+				);
+			} else {
+				frm.add_custom_button(__("Repetição Automática"), () => entre_facturacao.invoice_repeat.open(frm), __("Criar"));
+			}
 		}
 	},
 

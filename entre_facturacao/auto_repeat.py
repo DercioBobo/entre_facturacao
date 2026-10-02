@@ -2,7 +2,13 @@ import frappe
 from frappe import _
 from frappe.utils import add_months, cint, get_first_day, get_last_day, getdate, today
 
-from entre_facturacao.billing_period import apply_payment_terms, period_for_schedule, period_label, periods_overlap
+from entre_facturacao.billing_period import (
+	apply_payment_terms,
+	get_template_suggestions,
+	period_for_schedule,
+	period_label,
+	periods_overlap,
+)
 
 
 @frappe.whitelist()
@@ -171,3 +177,58 @@ def issue_auto_repeat_now(auto_repeat):
 			)
 
 	return {"invoice": new_doc.name, "next_schedule_date": next_date}
+
+
+@frappe.whitelist()
+def create_auto_repeat_from_invoice(
+	sales_invoice,
+	frequency,
+	start_date,
+	end_date=None,
+	billing_mode=None,
+	payment_days=None,
+	submit_on_creation=0,
+	notify_by_email=0,
+	recipients=None,
+):
+	"""Create an Auto Repeat with the given invoice as its template, straight
+	from the invoice form. With a Modo de Facturação, the title / description
+	templates are filled in from the invoice like the Auto Repeat's "Copiar
+	descrições da factura modelo" button does."""
+	si = frappe.get_doc("Sales Invoice", sales_invoice)
+	si.check_permission("write")
+	if si.docstatus == 2:
+		frappe.throw(_("Não é possível repetir uma factura cancelada."))
+	if si.get("is_return"):
+		frappe.throw(_("Não é possível repetir uma nota de crédito."))
+	if si.get("auto_repeat"):
+		frappe.throw(_("Esta factura já tem a repetição automática {0}.").format(si.auto_repeat))
+
+	ar = frappe.new_doc("Auto Repeat")
+	ar.update(
+		{
+			"reference_doctype": "Sales Invoice",
+			"reference_document": si.name,
+			"frequency": frequency,
+			"start_date": start_date,
+			"end_date": end_date or None,
+			"submit_on_creation": cint(submit_on_creation),
+			"notify_by_email": cint(notify_by_email),
+			"recipients": recipients if cint(notify_by_email) else None,
+			"billing_mode": billing_mode or None,
+			"payment_days": cint(payment_days) or None,
+		}
+	)
+
+	if billing_mode:
+		suggestions = get_template_suggestions(si.name, frequency, billing_mode)
+		# Only texts that mention the period become templates; the rest are
+		# copied from the invoice as they are, so later edits to it still count.
+		if "{{" in (suggestions["title_template"] or ""):
+			ar.title_template = suggestions["title_template"]
+		for row in suggestions["rows"]:
+			if "{{" in (row["description_template"] or ""):
+				ar.append("billing_descriptions", row)
+
+	ar.insert()
+	return {"name": ar.name, "next_schedule_date": ar.next_schedule_date}
