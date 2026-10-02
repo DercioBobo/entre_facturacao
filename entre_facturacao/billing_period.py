@@ -249,7 +249,9 @@ def render(template, context):
 def apply_billing_period(doc, reference_doc, ar):
 	"""Set billing period, title and item descriptions on `doc`, a new
 	invoice copied from `reference_doc` by Auto Repeat `ar`."""
-	new = period_for_schedule(doc.posting_date or ar.next_schedule_date, ar.frequency, ar.billing_mode)
+	# The schedule date, not the posting date: an invoice issued ahead of
+	# time (issue_auto_repeat_now) still bills the period it was due for.
+	new = period_for_schedule(ar.next_schedule_date or doc.posting_date, ar.frequency, ar.billing_mode)
 	if not new:
 		return None
 

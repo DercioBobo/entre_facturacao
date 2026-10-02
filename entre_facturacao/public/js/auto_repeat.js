@@ -183,6 +183,11 @@ frappe.ui.form.on("Auto Repeat", {
 				__("Período de Facturação")
 			);
 		}
+		if (bp.is_invoice(frm) && !frm.is_new() && !frm.doc.disabled && frm.doc.next_schedule_date) {
+			frm.add_custom_button(__("Emitir Agora (Antecipar)"), () =>
+				entre_facturacao.auto_repeat.issue_now(frm.doc.name, { on_done: () => frm.reload_doc() })
+			);
+		}
 		bp.render_preview(frm);
 	},
 	billing_mode: (frm) => entre_facturacao.billing_period.render_preview(frm),

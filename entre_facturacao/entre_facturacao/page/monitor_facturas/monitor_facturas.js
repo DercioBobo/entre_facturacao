@@ -695,8 +695,16 @@ class MonitorFacturas {
 				)
 			);
 		});
-		this.$body.find("#mf-up-tbody").on("click", ".mf-toggle-btn", (e) => {
+		this.$body.find("#mf-up-tbody").on("click", ".mf-toggle-btn:not(.mf-up-issue)", (e) => {
 			this._toggle_auto_repeat($(e.currentTarget));
+		});
+		this.$body.find("#mf-up-tbody").on("click", ".mf-up-issue", (e) => {
+			entre_facturacao.auto_repeat.issue_now($(e.currentTarget).data("auto-repeat"), {
+				on_done: () => {
+					this.search_upcoming();
+					this.search();
+				},
+			});
 		});
 
 		this._init_default_fiscal_year(
@@ -784,7 +792,12 @@ class MonitorFacturas {
 				<td>${frappe.utils.escape_html(MF_FREQ_LABELS[r.frequency] || r.frequency || "—")}</td>
 				<td class="mf-r">${format_currency(r.grand_total)}</td>
 				<td><span class="mf-b ${BADGE[r.display_status] || ""}">${r.display_status}</span></td>
-				<td>
+				<td style="white-space: nowrap;">
+					${
+						r.display_status === "Activo"
+							? `<button class="btn btn-default btn-sm mf-toggle-btn mf-up-issue" data-auto-repeat="${frappe.utils.escape_html(r.auto_repeat)}" title="${__("Emitir hoje e passar a repetição para o ciclo seguinte")}">${__("Emitir Agora")}</button> `
+							: ""
+					}
 					<button
 						class="btn btn-default btn-sm mf-toggle-btn"
 						data-auto-repeat="${r.auto_repeat}"
