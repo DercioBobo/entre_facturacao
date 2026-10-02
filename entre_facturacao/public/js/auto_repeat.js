@@ -187,6 +187,9 @@ frappe.ui.form.on("Auto Repeat", {
 			frm.add_custom_button(__("Emitir Agora (Antecipar)"), () =>
 				entre_facturacao.auto_repeat.issue_now(frm.doc.name, { on_done: () => frm.reload_doc() })
 			);
+			frm.add_custom_button(__("Alterar Próxima Data"), () =>
+				entre_facturacao.auto_repeat.change_next_date(frm.doc.name, { on_done: () => frm.reload_doc() })
+			);
 		}
 		bp.render_preview(frm);
 	},

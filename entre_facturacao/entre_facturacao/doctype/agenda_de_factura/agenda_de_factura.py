@@ -261,7 +261,12 @@ def _notify(name, subject, content):
 def get_preview(doc, print_format=None):
 	"""Render the invoice an (unsaved) agenda will issue with a Sales Invoice
 	print format, as it would look on the scheduled date."""
-	from frappe.www.printview import get_html_and_style
+	from frappe.www.printview import (
+		get_print_format_doc,
+		get_print_style,
+		get_rendered_template,
+		set_link_titles,
+	)
 
 	agenda = frappe.get_doc(frappe.parse_json(doc))
 	if not frappe.has_permission("Agenda de Factura", "read"):
@@ -273,16 +278,23 @@ def get_preview(doc, print_format=None):
 	si.name = predict_invoice_name(si) or _("Pré-visualização")
 
 	print_format = print_format or frappe.get_meta("Sales Invoice").default_print_format or "Standard"
-	# The invoice is unsaved and a draft: permission was checked above.
+	# Same steps as printview.get_html_and_style, which only takes a saved
+	# doc's name or JSON (and checks permission on it). The invoice is
+	# unsaved and a draft: permission was checked above.
+	print_format_doc = get_print_format_doc(print_format, meta=si.meta)
+	set_link_titles(si)
 	frappe.flags.ignore_print_permissions = True
 	try:
-		out = get_html_and_style(si, print_format=print_format)
+		html = get_rendered_template(doc=si, print_format=print_format_doc, meta=si.meta)
+	except frappe.TemplateNotFoundError:
+		frappe.clear_last_message()
+		html = None
 	finally:
 		frappe.flags.ignore_print_permissions = False
 
 	return {
-		"html": out.get("html"),
-		"style": out.get("style"),
+		"html": html,
+		"style": get_print_style(print_format=print_format_doc),
 		"print_format": print_format,
 		"posting_date": si.posting_date,
 		"due_date": si.due_date,

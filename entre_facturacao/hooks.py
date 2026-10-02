@@ -22,7 +22,10 @@ doc_events = {
         "on_recurring": "entre_facturacao.billing_period.on_recurring",
     },
     "Auto Repeat": {
-        "validate": "entre_facturacao.billing_period.validate_auto_repeat",
+        "validate": [
+            "entre_facturacao.billing_period.validate_auto_repeat",
+            "entre_facturacao.auto_repeat.preserve_next_schedule_date",
+        ],
     },
 }
 

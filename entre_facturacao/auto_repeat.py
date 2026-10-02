@@ -3,6 +3,7 @@ from frappe import _
 from frappe.utils import add_months, cint, get_first_day, get_last_day, getdate, today
 
 from entre_facturacao.billing_period import (
+	FREQ_MONTHS,
 	apply_payment_terms,
 	get_template_suggestions,
 	period_for_schedule,
@@ -204,13 +205,22 @@ def create_auto_repeat_from_invoice(
 	if si.get("auto_repeat"):
 		frappe.throw(_("Esta factura já tem a repetição automática {0}.").format(si.auto_repeat))
 
+	months = FREQ_MONTHS.get(frequency)
+	if not months:
+		frappe.throw(_("Frequência inválida."))
+	first_date = getdate(start_date)
+	if first_date < getdate(today()):
+		frappe.throw(_("A primeira factura não pode ser anterior a hoje."))
+
 	ar = frappe.new_doc("Auto Repeat")
 	ar.update(
 		{
 			"reference_doctype": "Sales Invoice",
 			"reference_document": si.name,
 			"frequency": frequency,
-			"start_date": start_date,
+			# Frappe's first run is one cycle after start_date.
+			"start_date": add_months(first_date, -months),
+			"repeat_on_day": first_date.day,
 			"end_date": end_date or None,
 			"submit_on_creation": cint(submit_on_creation),
 			"notify_by_email": cint(notify_by_email),
@@ -232,3 +242,93 @@ def create_auto_repeat_from_invoice(
 
 	ar.insert()
 	return {"name": ar.name, "next_schedule_date": ar.next_schedule_date}
+
+
+# Fields Frappe's AutoRepeat.set_dates derives next_schedule_date from.
+SCHEDULE_FIELDS = ("start_date", "frequency", "repeat_on_day", "repeat_on_last_day", "disabled")
+
+
+def preserve_next_schedule_date(doc, method=None):
+	"""doc_events validate hook. Frappe recomputes next_schedule_date from
+	start_date on every save, which would undo a date moved by hand
+	(set_next_schedule_date, skip_auto_repeat_this_month,
+	issue_auto_repeat_now) and could issue a period twice. Keep the stored
+	date unless the schedule itself was changed."""
+	prev = doc.get_doc_before_save()
+	if doc.is_new() or not prev or doc.disabled or not prev.next_schedule_date:
+		return
+	if any(doc.get(f) != prev.get(f) for f in SCHEDULE_FIELDS):
+		return
+	kept = getdate(prev.next_schedule_date)
+	if kept < getdate(today()) or (doc.end_date and kept > getdate(doc.end_date)):
+		return
+	doc.next_schedule_date = kept
+
+
+def _get_editable_auto_repeat(auto_repeat):
+	doc = frappe.get_doc("Auto Repeat", auto_repeat)
+	if doc.reference_doctype != "Sales Invoice":
+		frappe.throw(_("Invalid request"))
+	if not frappe.has_permission("Sales Invoice", "write", doc=doc.reference_document):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	doc.check_permission("write")
+	return doc
+
+
+def _period_info(doc, schedule_date):
+	if not schedule_date or not doc.get("billing_mode"):
+		return None
+	period = period_for_schedule(schedule_date, doc.frequency, doc.billing_mode)
+	return period_label(period) if period else None
+
+
+@frappe.whitelist()
+def get_next_schedule_date_info(auto_repeat, next_schedule_date=None):
+	"""For the "Alterar Próxima Data" dialog: the billed period of the
+	current and of the proposed date."""
+	doc = _get_editable_auto_repeat(auto_repeat)
+	return {
+		"current_date": doc.next_schedule_date,
+		"current_periodo": _period_info(doc, doc.next_schedule_date),
+		"periodo": _period_info(doc, next_schedule_date),
+		"month_based": doc.frequency in FREQ_MONTHS,
+	}
+
+
+@frappe.whitelist()
+def set_next_schedule_date(auto_repeat, next_schedule_date, shift_following=0):
+	"""Move an Auto Repeat's next invoice to another date.
+
+	Frappe only issues on the exact next_schedule_date, so it can't be in
+	the past. By default only this invoice moves: the cycles after it stay
+	on the original day (due on the 2nd, moved to the 10th → next one on
+	the 2nd again). With shift_following, the schedule itself moves so later
+	invoices follow the new date.
+	"""
+	doc = _get_editable_auto_repeat(auto_repeat)
+	if doc.disabled:
+		frappe.throw(_("Esta repetição está desactivada."))
+
+	new_date = getdate(next_schedule_date)
+	if new_date < getdate(today()):
+		frappe.throw(_("A próxima data não pode ser anterior a hoje."))
+	if doc.end_date and new_date > getdate(doc.end_date):
+		frappe.throw(_("A próxima data não pode ser posterior à Data de Fim ({0}).").format(doc.end_date))
+
+	months = FREQ_MONTHS.get(doc.frequency)
+	if cint(shift_following) and months:
+		# Next cycle = start_date + n cycles, on repeat_on_day if set.
+		doc.start_date = add_months(new_date, -months)
+		doc.repeat_on_day = new_date.day
+		doc.repeat_on_last_day = 0
+		doc.save()
+	# Daily / Weekly cycles count from the last schedule date, so later
+	# invoices follow the new date anyway.
+	doc.db_set("next_schedule_date", new_date)
+
+	following = getdate(doc.get_next_schedule_date(schedule_date=new_date, for_full_schedule=True))
+	return {
+		"next_schedule_date": new_date,
+		"following_date": following if not doc.end_date or following <= getdate(doc.end_date) else None,
+		"periodo": _period_info(doc, new_date),
+	}
