@@ -64,6 +64,7 @@ fixtures = [
                     "billing_descriptions",
                     "billing_preview_section",
                     "billing_preview",
+                    "agenda_de_factura",
                 ],
             ],
         ],
@@ -72,4 +73,8 @@ fixtures = [
 
 # doc_events = {}
 
-# scheduler_events = {}
+scheduler_events = {
+    "hourly": [
+        "entre_facturacao.entre_facturacao.doctype.agenda_de_factura.agenda_de_factura.issue_due",
+    ],
+}

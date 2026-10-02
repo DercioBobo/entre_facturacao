@@ -24,6 +24,18 @@
   },
   {
    "type": "Link",
+   "label": "Agenda de Factura",
+   "link_type": "DocType",
+   "link_to": "Agenda de Factura",
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link",
+   "idx": 2
+  },
+  {
+   "type": "Link",
    "label": "Monitor de Facturas",
    "link_type": "Page",
    "link_to": "monitor-facturas",
@@ -31,7 +43,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 2,
+   "idx": 3,
    "doctype": "Workspace Link"
   },
   {
@@ -43,7 +55,7 @@
    "hidden": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 3,
+   "idx": 4,
    "doctype": "Workspace Link"
   },
   {
@@ -55,7 +67,7 @@
    "hidden": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 4,
+   "idx": 5,
    "doctype": "Workspace Link"
   },
   {
@@ -67,7 +79,7 @@
    "hidden": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 5,
+   "idx": 6,
    "doctype": "Workspace Link"
   },
   {
@@ -79,7 +91,7 @@
    "hidden": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 6,
+   "idx": 7,
    "doctype": "Workspace Link"
   },
   {
@@ -89,7 +101,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 7,
+   "idx": 8,
    "doctype": "Workspace Link"
   },
   {
@@ -101,7 +113,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 8,
+   "idx": 9,
    "doctype": "Workspace Link"
   },
   {
@@ -113,11 +125,11 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 9,
+   "idx": 10,
    "doctype": "Workspace Link"
   }
  ],
- "modified": "2026-10-01 12:00:00.000000",
+ "modified": "2026-10-02 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Entre Facturacao",

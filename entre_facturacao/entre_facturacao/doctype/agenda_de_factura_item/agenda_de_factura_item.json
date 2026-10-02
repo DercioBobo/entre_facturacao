@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "creation": "2026-10-02 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "qty",
+  "rate",
+  "amount",
+  "description"
+ ],
+ "fields": [
+  {
+   "columns": 4,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "item_code.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Nome do Item",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "default": "1",
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantidade",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "description": "Vazio: usa o preço da lista de preços do cliente.",
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Preço",
+   "options": "currency"
+  },
+  {
+   "columns": 2,
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Valor",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "description": "Vazio: usa a descrição do item.",
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Descrição"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-02 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "Agenda de Factura Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -32,14 +32,18 @@ class MonitorFacturas {
 			<div class="mf-tabs">
 				<button class="mf-tab-btn active" data-tab="invoices">${__("Facturas")}</button>
 				<button class="mf-tab-btn" data-tab="upcoming">${__("Próximas Facturas")}</button>
+				<button class="mf-tab-btn" data-tab="scheduled">${__("Agendadas")} <span class="mf-tab-badge" id="mf-sc-badge" style="display:none"></span></button>
 			</div>
 			<div class="mf-panel" id="mf-panel-invoices"></div>
 			<div class="mf-panel" id="mf-panel-upcoming" style="display:none"></div>
+			<div class="mf-panel" id="mf-panel-scheduled" style="display:none"></div>
 		</div>`);
 
 		this._build_invoices_panel();
 		this._build_upcoming_panel();
+		this._build_scheduled_panel();
 		this._bind_tabs();
+		this._refresh_scheduled_badge();
 	}
 
 	_bind_tabs() {
@@ -49,9 +53,14 @@ class MonitorFacturas {
 			$(e.currentTarget).addClass("active");
 			this.$body.find("#mf-panel-invoices").toggle(tab === "invoices");
 			this.$body.find("#mf-panel-upcoming").toggle(tab === "upcoming");
+			this.$body.find("#mf-panel-scheduled").toggle(tab === "scheduled");
 			if (tab === "upcoming" && !this._upcoming_loaded) {
 				this._upcoming_loaded = true;
 				this.search_upcoming();
+			}
+			if (tab === "scheduled" && !this._scheduled_loaded) {
+				this._scheduled_loaded = true;
+				this.search_scheduled();
 			}
 		});
 	}
@@ -808,6 +817,339 @@ class MonitorFacturas {
 		this.search_upcoming();
 	}
 
+	/* ───────────────────── Tab 3: Agendadas ───────────────────── */
+
+	_build_scheduled_panel() {
+		const $panel = this.$body.find("#mf-panel-scheduled");
+		$panel.html(`
+			<div class="mf-filters">
+				<div class="mf-row">
+					<div class="mf-fg" id="mf-sc-company-wrap">
+						<label>${__("Empresa")}</label>
+					</div>
+					<div class="mf-fg mf-fg--grow" id="mf-sc-customer-wrap">
+						<label>${__("Cliente")}</label>
+					</div>
+					<div class="mf-fg">
+						<label>${__("Mês")}</label>
+						<input id="mf-sc-month" type="month">
+					</div>
+					<div class="mf-fg">
+						<label>${__("De")}</label>
+						<input id="mf-sc-from" type="date">
+					</div>
+					<div class="mf-fg">
+						<label>${__("Até")}</label>
+						<input id="mf-sc-to" type="date">
+					</div>
+					<div class="mf-fg">
+						<label>${__("Estado")}</label>
+						<select id="mf-sc-status">
+							<option value="">${__("Pendentes")}</option>
+							<option value="Agendada">${__("Agendada")}</option>
+							<option value="Erro">${__("Erro")}</option>
+							<option value="Emitida">${__("Emitida")}</option>
+							<option value="Cancelada">${__("Cancelada")}</option>
+							<option value="Todos">${__("Todos")}</option>
+						</select>
+					</div>
+					<div class="mf-fg mf-fg--btns">
+						<button class="btn btn-primary btn-sm" id="mf-sc-search">${__("Pesquisar")}</button>
+						<button class="btn btn-default btn-sm"  id="mf-sc-clear">${__("Limpar")}</button>
+						<button class="btn btn-default btn-sm"  id="mf-sc-new">${__("Nova Agenda")}</button>
+						<div class="dropdown">
+							<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								${__("Ações")}
+							</button>
+							<div class="dropdown-menu dropdown-menu-right">
+								<a class="dropdown-item" href="#" id="mf-sc-print">${__("Imprimir")}</a>
+								<a class="dropdown-item" href="#" id="mf-sc-export-xlsx">${__("Exportar Excel")}</a>
+								<a class="dropdown-item" href="#" id="mf-sc-export-pdf">${__("Exportar PDF")}</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="mf-summary" id="mf-sc-summary" style="display:none">
+				<div class="mf-card mf-card--blue">
+					<div class="mf-card-lbl">${__("Total Agendado")}</div>
+					<div class="mf-card-val" id="mf-sc-s-total">—</div>
+					<div class="mf-card-sub">${__("estimado, por emitir")}</div>
+				</div>
+				<div class="mf-card mf-card--green">
+					<div class="mf-card-lbl">${__("Por Emitir")}</div>
+					<div class="mf-card-val" id="mf-sc-s-pending">—</div>
+				</div>
+				<div class="mf-card mf-card--orange">
+					<div class="mf-card-lbl">${__("Próxima Emissão")}</div>
+					<div class="mf-card-val" id="mf-sc-s-next">—</div>
+				</div>
+				<div class="mf-card mf-card--red">
+					<div class="mf-card-lbl">${__("Com Erro")}</div>
+					<div class="mf-card-val" id="mf-sc-s-errors">—</div>
+				</div>
+			</div>
+
+			<div class="mf-tbl-wrap" id="mf-sc-tbl-wrap" style="display:none">
+				<table class="mf-tbl">
+					<thead><tr>
+						<th>${__("Cliente")}</th>
+						<th>${__("Agenda")}</th>
+						<th>${__("Título")}</th>
+						<th>${__("Data de Emissão")}</th>
+						<th class="mf-r">${__("Total (estimado)")}</th>
+						<th>${__("Estado")}</th>
+						<th>${__("Factura Emitida")}</th>
+						<th></th>
+					</tr></thead>
+					<tbody id="mf-sc-tbody"></tbody>
+					<tfoot id="mf-sc-tfoot"></tfoot>
+				</table>
+			</div>
+
+			<div class="mf-empty" id="mf-sc-empty" style="display:none">
+				${__("Nenhuma factura agendada encontrada.")}
+			</div>`);
+
+		this.scheduled_company_control = frappe.ui.form.make_control({
+			df: {
+				fieldtype: "Link",
+				fieldname: "company",
+				options: "Company",
+			},
+			parent: this.$body.find("#mf-sc-company-wrap")[0],
+			render_input: true,
+		});
+		this.scheduled_company_control.refresh();
+		this.scheduled_company_control.set_value(frappe.defaults.get_default("company") || "");
+		this.scheduled_company_control.$input.on("change awesomplete-selectcomplete", () =>
+			this.search_scheduled()
+		);
+
+		this.scheduled_customer_control = frappe.ui.form.make_control({
+			df: {
+				fieldtype: "Link",
+				fieldname: "customer",
+				options: "Customer",
+				placeholder: __("Todos"),
+			},
+			parent: this.$body.find("#mf-sc-customer-wrap")[0],
+			render_input: true,
+		});
+		this.scheduled_customer_control.refresh();
+		this.scheduled_customer_control.$input.on("change awesomplete-selectcomplete", () =>
+			this.search_scheduled()
+		);
+
+		this.$body.find("#mf-sc-search").on("click", () => this.search_scheduled());
+		this.$body.find("#mf-sc-clear").on("click", () => this._clear_scheduled());
+		this.$body.find("#mf-sc-new").on("click", () => frappe.new_doc("Agenda de Factura"));
+		this.$body.find("#mf-sc-status").on("change", () => this.search_scheduled());
+		this.$body.find("#mf-sc-month").on("change", (e) => {
+			this._apply_month(e.target.value, "#mf-sc-from", "#mf-sc-to");
+			this.search_scheduled();
+		});
+		this.$body.find("#mf-sc-from, #mf-sc-to").on("change", () => {
+			this.$body.find("#mf-sc-month").val("");
+			this.search_scheduled();
+		});
+		this.$body.find("#mf-sc-print").on("click", (e) => {
+			e.preventDefault();
+			this._show_print_options((opts) => this._print(opts));
+		});
+		this.$body.find("#mf-sc-export-xlsx").on("click", (e) => {
+			e.preventDefault();
+			this._export(
+				"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_scheduled_xlsx",
+				this._get_scheduled_filters()
+			);
+		});
+		this.$body.find("#mf-sc-export-pdf").on("click", (e) => {
+			e.preventDefault();
+			this._show_print_options((opts) =>
+				this._export(
+					"entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.export_scheduled_pdf",
+					{ ...this._get_scheduled_filters(), ...opts }
+				)
+			);
+		});
+		this.$body.find("#mf-sc-tbody").on("click", ".mf-sc-issue", (e) => {
+			this._issue_scheduled($(e.currentTarget));
+		});
+		this.$body.find("#mf-sc-tbody").on("click", ".mf-sc-cancel", (e) => {
+			e.preventDefault();
+			this._cancel_scheduled($(e.currentTarget).data("agenda"));
+		});
+	}
+
+	_get_scheduled_filters() {
+		return {
+			company: this.scheduled_company_control.get_value() || "",
+			from_date: this.$body.find("#mf-sc-from").val() || "",
+			to_date: this.$body.find("#mf-sc-to").val() || "",
+			customer: this.scheduled_customer_control.get_value() || "",
+			status: this.$body.find("#mf-sc-status").val() || "",
+		};
+	}
+
+	async search_scheduled() {
+		const $btn = this.$body.find("#mf-sc-search").prop("disabled", true).text(__("A pesquisar…"));
+		try {
+			const r = await frappe.call({
+				method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_scheduled_invoices",
+				args: this._get_scheduled_filters(),
+			});
+			if (r.message) this._render_scheduled(r.message);
+		} finally {
+			$btn.prop("disabled", false).text(__("Pesquisar"));
+		}
+	}
+
+	_render_scheduled({ rows, summary }) {
+		const $sum = this.$body.find("#mf-sc-summary").show();
+		$sum.find("#mf-sc-s-total").text(format_currency(summary.total_pending));
+		$sum.find("#mf-sc-s-pending").text(summary.pending_count);
+		$sum.find("#mf-sc-s-next").text(summary.next_date ? frappe.datetime.str_to_user(summary.next_date) : "—");
+		$sum.find("#mf-sc-s-errors").text(summary.error_count);
+
+		const BADGE = {
+			"Agendada": "mf-b--blue",
+			"Emitida": "mf-b--green",
+			"Erro": "mf-b--red",
+			"Cancelada": "mf-b--grey",
+		};
+
+		if (!rows.length) {
+			this.$body.find("#mf-sc-tbl-wrap").hide();
+			this.$body.find("#mf-sc-empty").show();
+			return;
+		}
+		this.$body.find("#mf-sc-empty").hide();
+		this.$body.find("#mf-sc-tbl-wrap").show();
+
+		const esc = frappe.utils.escape_html;
+		const today = frappe.datetime.get_today();
+		const html = rows
+			.map((r) => {
+				const pending = r.display_status === "Agendada" || r.display_status === "Erro";
+				const due = r.display_status === "Agendada" && r.scheduled_date <= today;
+				const actions = pending
+					? `<button class="btn btn-default btn-sm mf-toggle-btn mf-sc-issue" data-agenda="${esc(r.agenda)}">${
+							r.display_status === "Erro" ? __("Tentar Novamente") : __("Emitir Agora")
+					  }</button>
+					  <a href="#" class="mf-link mf-sc-cancel" data-agenda="${esc(r.agenda)}" title="${__("Cancelar agendamento")}"><i class="fa fa-fw fa-ban"></i></a>`
+					: "";
+				return `
+			<tr>
+				<td>${esc(r.customer_name || r.customer)}</td>
+				<td><a href="/app/agenda-de-factura/${encodeURIComponent(r.agenda)}" target="_blank" class="mf-ref-link">${esc(r.agenda)}</a></td>
+				<td>${esc(r.invoice_title || "")}</td>
+				<td>${r.scheduled_date ? frappe.datetime.str_to_user(r.scheduled_date) : "—"}${
+					due ? ` <span class="text-muted small">(${__("na próxima hora")})</span>` : ""
+				}</td>
+				<td class="mf-r">${format_currency(r.grand_total, r.currency)}</td>
+				<td><span class="mf-b ${BADGE[r.display_status] || ""}">${__(r.display_status)}</span>${
+					r.display_status === "Erro" && r.error_message
+						? `<div class="mf-sc-error">${esc(r.error_message)}</div>`
+						: ""
+				}</td>
+				<td>${
+					r.sales_invoice
+						? `<a href="/app/sales-invoice/${encodeURIComponent(r.sales_invoice)}" target="_blank" class="mf-ref-link">${esc(r.sales_invoice)}</a>`
+						: "—"
+				}</td>
+				<td><div class="mf-actions">
+					${actions}
+					<a href="/app/agenda-de-factura/${encodeURIComponent(r.agenda)}" target="_blank" class="mf-link" title="${__("Abrir agenda")}"><i class="fa fa-fw fa-pencil"></i></a>
+				</div></td>
+			</tr>`;
+			})
+			.join("");
+
+		this.$body.find("#mf-sc-tbody").html(html);
+
+		const total = rows.reduce((acc, r) => acc + (Number(r.grand_total) || 0), 0);
+		this.$body.find("#mf-sc-tfoot").html(`
+			<tr class="mf-tfoot-row">
+				<td colspan="4">${__("Total")}</td>
+				<td class="mf-r">${format_currency(total)}</td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>`);
+	}
+
+	_issue_scheduled($btn) {
+		const agenda = $btn.data("agenda");
+		frappe.confirm(__("Emitir agora a factura da agenda {0}, com a data de hoje?", [agenda]), () => {
+			$btn.prop("disabled", true);
+			frappe.call({
+				method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.issue_scheduled",
+				args: { agenda },
+				freeze: true,
+				freeze_message: __("A emitir a factura..."),
+				callback: (r) => {
+					if (r.message) {
+						frappe.show_alert({ message: __("Factura {0} emitida.", [r.message]), indicator: "green" });
+					}
+					this._after_scheduled_change();
+				},
+				always: () => $btn.prop("disabled", false),
+			});
+		});
+	}
+
+	_cancel_scheduled(agenda) {
+		frappe.confirm(__("Cancelar a agenda {0}? A factura não será emitida.", [agenda]), () =>
+			frappe.call({
+				method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.cancel_scheduled",
+				args: { agenda },
+				callback: () => {
+					frappe.show_alert({ message: __("Agenda cancelada."), indicator: "orange" });
+					this._after_scheduled_change();
+				},
+			})
+		);
+	}
+
+	_after_scheduled_change() {
+		this.search_scheduled();
+		this._refresh_scheduled_badge();
+		// An issued agenda adds an invoice to the Facturas tab.
+		this.search();
+	}
+
+	async _refresh_scheduled_badge() {
+		const r = await frappe.call({
+			method: "entre_facturacao.entre_facturacao.page.monitor_facturas.monitor_facturas.get_scheduled_counts",
+		});
+		const $badge = this.$body.find("#mf-sc-badge");
+		const counts = r.message;
+		if (!counts || !counts.pending) {
+			$badge.hide();
+			return;
+		}
+		$badge
+			.text(counts.pending)
+			.toggleClass("mf-tab-badge--red", !!counts.errors)
+			.attr(
+				"title",
+				counts.errors
+					? __("{0} por emitir, {1} com erro", [counts.pending, counts.errors])
+					: __("{0} por emitir", [counts.pending])
+			)
+			.show();
+	}
+
+	_clear_scheduled() {
+		this.$body.find("#mf-sc-status").val("");
+		this.$body.find("#mf-sc-month, #mf-sc-from, #mf-sc-to").val("");
+		this.scheduled_customer_control.set_value("");
+		this.$body.find("#mf-sc-summary, #mf-sc-tbl-wrap, #mf-sc-empty").hide();
+		this.search_scheduled();
+	}
+
 	/* ───────────────────────── Shared ───────────────────────── */
 
 	_apply_month(value, from_sel, to_sel) {
@@ -1003,6 +1345,12 @@ function _mf_styles() {
 .mf-b--orange { background: #fef3c7; color: #92400e; }
 .mf-b--red    { background: #fee2e2; color: #991b1b; }
 .mf-b--grey   { background: #e5e7eb; color: #374151; }
+.mf-b--blue   { background: #dbeafe; color: #1e40af; }
+.mf-tab-badge { display: inline-block; min-width: 18px; padding: 1px 6px; margin-left: 4px;
+	border-radius: 9px; font-size: 11px; line-height: 16px; text-align: center;
+	background: var(--subtle-fg); color: var(--text-muted); }
+.mf-tab-badge--red { background: #fee2e2; color: #991b1b; }
+.mf-sc-error { font-size: 11px; color: #991b1b; margin-top: 4px; max-width: 320px; white-space: normal; }
 .mf-actions { white-space: nowrap; display: flex; align-items: center; gap: 2px; }
 .mf-link { display: inline-flex; align-items: center; justify-content: center;
 	width: 26px; height: 26px; border-radius: 6px; font-size: 13px; line-height: 1;

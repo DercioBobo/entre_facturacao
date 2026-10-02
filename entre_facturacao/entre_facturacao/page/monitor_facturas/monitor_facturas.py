@@ -195,6 +195,69 @@ def _query_upcoming(from_date=None, to_date=None, customer=None, status=None, co
 	return rows, summary
 
 
+SCHEDULED_STATUSES = ("Agendada", "Erro", "Emitida", "Cancelada")
+
+
+def _query_scheduled(from_date=None, to_date=None, customer=None, status=None, company=None):
+	"""Agenda de Factura rows. Status "Pendentes" (the default) means not yet
+	issued: Agendada or Erro."""
+	conditions = []
+	params = {}
+
+	if company:
+		conditions.append("ag.company = %(company)s")
+		params["company"] = company
+	if from_date:
+		conditions.append("ag.scheduled_date >= %(from_date)s")
+		params["from_date"] = from_date
+	if to_date:
+		conditions.append("ag.scheduled_date <= %(to_date)s")
+		params["to_date"] = to_date
+	if customer:
+		conditions.append("ag.customer = %(customer)s")
+		params["customer"] = customer
+	if status in SCHEDULED_STATUSES:
+		conditions.append("ag.status = %(status)s")
+		params["status"] = status
+	elif status != "Todos":
+		conditions.append("ag.status IN ('Agendada', 'Erro')")
+
+	where = " AND ".join(conditions) or "1=1"
+
+	rows = frappe.db.sql(
+		f"""
+		SELECT
+			ag.name           AS agenda,
+			ag.customer,
+			ag.customer_name,
+			ag.invoice_title,
+			ag.scheduled_date,
+			ag.grand_total,
+			ag.currency,
+			ag.status         AS display_status,
+			ag.sales_invoice,
+			ag.error_message
+		FROM `tabAgenda de Factura` ag
+		WHERE {where}
+		ORDER BY ag.scheduled_date ASC, ag.creation ASC
+		LIMIT 1000
+		""",
+		params,
+		as_dict=True,
+	)
+
+	pending = [r for r in rows if r.display_status in ("Agendada", "Erro")]
+	next_dates = [getdate(r.scheduled_date) for r in pending if r.display_status == "Agendada"]
+	summary = {
+		"count": len(rows),
+		"pending_count": len(pending),
+		"total_pending": round(sum(flt(r.grand_total) for r in pending), 2),
+		"error_count": sum(1 for r in rows if r.display_status == "Erro"),
+		"next_date": min(next_dates).isoformat() if next_dates else None,
+	}
+	return rows, summary
+
+
 @frappe.whitelist()
 def get_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
 	"""Return filtered Sales Invoice rows and summary stats."""
@@ -213,6 +276,41 @@ def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=No
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	rows, summary = _query_upcoming(from_date, to_date, customer, status, company)
 	return {"rows": rows, "summary": summary}
+
+
+def _check_scheduled_permission():
+	if not frappe.has_permission("Agenda de Factura", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+@frappe.whitelist()
+def get_scheduled_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
+	"""Return Agenda de Factura rows (invoices scheduled for a future date)."""
+	_check_scheduled_permission()
+	rows, summary = _query_scheduled(from_date, to_date, customer, status, company)
+	return {"rows": rows, "summary": summary}
+
+
+@frappe.whitelist()
+def get_scheduled_counts():
+	"""Pending / failed agendas, for the tab badge."""
+	if not frappe.has_permission("Agenda de Factura", "read"):
+		return None
+	return {
+		"pending": frappe.db.count("Agenda de Factura", {"status": ["in", ["Agendada", "Erro"]]}),
+		"errors": frappe.db.count("Agenda de Factura", {"status": "Erro"}),
+	}
+
+
+@frappe.whitelist()
+def issue_scheduled(agenda):
+	"""Emitir Agora from the Agendadas tab."""
+	return frappe.get_doc("Agenda de Factura", agenda).issue_now()
+
+
+@frappe.whitelist()
+def cancel_scheduled(agenda):
+	frappe.get_doc("Agenda de Factura", agenda).cancel_schedule()
 
 
 @frappe.whitelist()
@@ -241,6 +339,7 @@ def get_default_fiscal_year(company=None):
 
 INVOICE_HEADERS = ["Cliente", "Nº Factura", "Título", "Emissão", "Vencimento", "Total", "Pago", "Em Dívida", "Estado"]
 UPCOMING_HEADERS = ["Cliente", "Factura de Referência", "Título", "Próxima Data", "Frequência", "Valor Esperado", "Estado"]
+SCHEDULED_HEADERS = ["Cliente", "Agenda", "Título", "Data de Emissão", "Total (estimado)", "Estado", "Factura Emitida"]
 
 
 def _invoice_table(rows):
@@ -290,6 +389,24 @@ def _upcoming_table(rows):
 			]
 		)
 	data.append([_("Total"), "", "", "", "", flt(sum(flt(r.grand_total) for r in rows), 2), ""])
+	return data
+
+
+def _scheduled_table(rows):
+	data = [[_(h) for h in SCHEDULED_HEADERS]]
+	for r in rows:
+		data.append(
+			[
+				r.customer_name or r.customer,
+				r.agenda,
+				r.invoice_title or "",
+				formatdate(r.scheduled_date) if r.scheduled_date else "",
+				flt(r.grand_total, 2),
+				_(r.display_status),
+				r.sales_invoice or "",
+			]
+		)
+	data.append([_("Total"), "", "", "", flt(sum(flt(r.grand_total) for r in rows), 2), "", ""])
 	return data
 
 
@@ -430,5 +547,38 @@ def export_upcoming_pdf(
 		_("Próximas Facturas"), table[0], table[1:], right_align_cols=(5,), letterhead_html=letterhead_html
 	)
 	frappe.response["filename"] = "proximas-facturas.pdf"
+	frappe.response["filecontent"] = get_pdf(html, options=_pdf_options(orientation))
+	frappe.response["type"] = "pdf"
+
+
+@frappe.whitelist()
+def export_scheduled_xlsx(from_date=None, to_date=None, customer=None, status=None, company=None):
+	_check_scheduled_permission()
+	rows, _summary = _query_scheduled(from_date, to_date, customer, status, company)
+	xlsx_file = make_xlsx(_scheduled_table(rows), "Facturas Agendadas")
+	frappe.response["filename"] = "facturas-agendadas.xlsx"
+	frappe.response["filecontent"] = xlsx_file.getvalue()
+	frappe.response["type"] = "binary"
+
+
+@frappe.whitelist()
+def export_scheduled_pdf(
+	from_date=None,
+	to_date=None,
+	customer=None,
+	status=None,
+	company=None,
+	with_letterhead=0,
+	letter_head=None,
+	orientation=None,
+):
+	_check_scheduled_permission()
+	rows, _summary = _query_scheduled(from_date, to_date, customer, status, company)
+	table = _scheduled_table(rows)
+	letterhead_html = _get_letterhead_html(letter_head) if cint(with_letterhead) else ""
+	html = _html_page(
+		_("Facturas Agendadas"), table[0], table[1:], right_align_cols=(4,), letterhead_html=letterhead_html
+	)
+	frappe.response["filename"] = "facturas-agendadas.pdf"
 	frappe.response["filecontent"] = get_pdf(html, options=_pdf_options(orientation))
 	frappe.response["type"] = "pdf"
