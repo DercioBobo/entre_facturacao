@@ -12,6 +12,7 @@
   "column_break_main",
   "scheduled_date",
   "status",
+  "invoice_naming_series",
   "submit_on_creation",
   "payment_days",
   "invoice_section",
@@ -92,6 +93,12 @@
    "no_copy": 1,
    "options": "Agendada\nEmitida\nErro\nCancelada",
    "read_only": 1
+  },
+  {
+   "description": "Série da Sales Invoice que vai ser emitida.",
+   "fieldname": "invoice_naming_series",
+   "fieldtype": "Select",
+   "label": "Série da Factura"
   },
   {
    "default": "1",
@@ -221,7 +228,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-02 00:00:00.000000",
+ "modified": "2026-10-02 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Agenda de Factura",

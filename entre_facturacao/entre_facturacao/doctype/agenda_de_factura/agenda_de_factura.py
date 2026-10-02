@@ -40,6 +40,14 @@ class AgendaDeFactura(Document):
 			self.status = SCHEDULED
 			self.error_message = None
 
+		series = invoice_naming_series()
+		if self.invoice_naming_series and self.invoice_naming_series not in series:
+			frappe.throw(
+				_("Série da Factura inválida: {0}. Séries disponíveis: {1}").format(
+					self.invoice_naming_series, ", ".join(series)
+				)
+			)
+
 		self.set_totals()
 
 	def on_trash(self):
@@ -63,6 +71,8 @@ class AgendaDeFactura(Document):
 	def make_sales_invoice(self, posting_date):
 		"""The (unsaved) Sales Invoice this agenda issues on `posting_date`."""
 		si = frappe.new_doc("Sales Invoice")
+		if self.invoice_naming_series:
+			si.naming_series = self.invoice_naming_series
 		si.company = self.company
 		si.customer = self.customer
 		si.posting_date = getdate(posting_date)
@@ -137,6 +147,40 @@ class AgendaDeFactura(Document):
 		if self.status != CANCELLED:
 			frappe.throw(_("Só uma agenda cancelada pode ser reactivada."))
 		self.db_set({"status": SCHEDULED, "error_message": None})
+
+
+# ---------------------------------------------------------------------------
+# Naming series
+# ---------------------------------------------------------------------------
+
+
+def invoice_naming_series():
+	"""The Sales Invoice naming series, as configured (property setters
+	included)."""
+	df = frappe.get_meta("Sales Invoice").get_field("naming_series")
+	return [s.strip() for s in (df.options or "").split("\n") if s.strip()] if df else []
+
+
+@frappe.whitelist()
+def get_invoice_naming_series():
+	if not frappe.has_permission("Agenda de Factura", "read"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	df = frappe.get_meta("Sales Invoice").get_field("naming_series")
+	return {"options": invoice_naming_series(), "default": df.default if df else None}
+
+
+def predict_invoice_name(si):
+	"""The number `si` would get if it were saved now. Only a forecast: any
+	invoice issued in the meantime takes it first."""
+	if not si.get("naming_series"):
+		return None
+	try:
+		from frappe.model.naming import NamingSeries
+
+		names = NamingSeries(si.naming_series).get_preview(doc=si)
+		return names[0] if names else None
+	except Exception:
+		return None
 
 
 # ---------------------------------------------------------------------------
@@ -224,7 +268,7 @@ def get_preview(doc, print_format=None):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	si = agenda.make_sales_invoice(agenda.scheduled_date or today())
-	si.name = _("Pré-visualização")
+	si.name = predict_invoice_name(si) or _("Pré-visualização")
 
 	print_format = print_format or frappe.get_meta("Sales Invoice").default_print_format or "Standard"
 	# The invoice is unsaved and a draft: permission was checked above.
@@ -244,4 +288,6 @@ def get_preview(doc, print_format=None):
 		"net_total": si.net_total,
 		"total_taxes_and_charges": si.total_taxes_and_charges,
 		"grand_total": si.grand_total,
+		"invoice_name": si.name,
+		"naming_series": si.naming_series,
 	}

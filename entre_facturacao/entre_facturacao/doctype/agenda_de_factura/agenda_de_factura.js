@@ -10,6 +10,18 @@ frappe.ui.form.on("Agenda de Factura", {
 
 	setup(frm) {
 		frm.set_query("taxes_and_charges", () => ({ filters: { company: frm.doc.company } }));
+		set_naming_series_options(frm);
+	},
+
+	after_save(frm) {
+		// Saved with today's date (or earlier): offer to issue right away
+		// instead of waiting for the hourly job.
+		if (frm._issuing || frm.doc.status !== "Agendada") return;
+		if (frm.doc.scheduled_date > frappe.datetime.get_today()) return;
+		frappe.confirm(
+			__("A data de emissão já chegou. Emitir a factura agora? (Se não, será emitida automaticamente dentro de uma hora.)"),
+			() => run_issue(frm)
+		);
 	},
 
 	refresh(frm) {
@@ -44,12 +56,12 @@ frappe.ui.form.on("Agenda de Factura", {
 			return;
 		}
 
-		if (frm.is_new()) return;
-
 		frm.add_custom_button(
 			status === "Erro" ? __("Tentar Novamente") : __("Emitir Agora"),
 			() => issue_now(frm)
 		);
+		if (frm.is_new()) return;
+
 		frm.add_custom_button(__("Cancelar Agendamento"), () =>
 			frappe.confirm(__("Cancelar esta agenda? A factura não será emitida."), () =>
 				frm.call("cancel_schedule").then(() => frm.reload_doc())
@@ -88,20 +100,44 @@ function set_amount(frm, cdt, cdn) {
 	frappe.model.set_value(cdt, cdn, "amount", flt(row.qty) * flt(row.rate));
 }
 
+function set_naming_series_options(frm) {
+	frappe
+		.call("entre_facturacao.entre_facturacao.doctype.agenda_de_factura.agenda_de_factura.get_invoice_naming_series")
+		.then((r) => {
+			const res = r.message || {};
+			const options = res.options || [];
+			frm.set_df_property("invoice_naming_series", "options", [""].concat(options));
+			if (frm.is_new() && !frm.doc.invoice_naming_series) {
+				const fallback = options.includes(res.default) ? res.default : options[0];
+				if (fallback) frm.set_value("invoice_naming_series", fallback);
+			}
+			frm.refresh_field("invoice_naming_series");
+		});
+}
+
+// Issue now, skipping the wait. An unsaved / changed agenda is saved first.
 function issue_now(frm) {
-	const run = () =>
-		frm.call({ method: "issue_now", freeze: true, freeze_message: __("A emitir a factura...") }).then((r) => {
+	frappe.confirm(__("Emitir a factura agora, com a data de hoje?"), () => {
+		if (!frm.is_new() && !frm.is_dirty()) {
+			run_issue(frm);
+			return;
+		}
+		frm._issuing = true;
+		frm.save()
+			.then(() => run_issue(frm))
+			.finally(() => (frm._issuing = false));
+	});
+}
+
+function run_issue(frm) {
+	return frm
+		.call({ method: "issue_now", freeze: true, freeze_message: __("A emitir a factura...") })
+		.then((r) => {
 			frm.reload_doc();
 			if (r.message) {
 				frappe.show_alert({ message: __("Factura {0} emitida.", [r.message]), indicator: "green" });
 			}
 		});
-
-	if (frm.is_dirty()) {
-		frappe.msgprint(__("Guarde a agenda antes de emitir."));
-		return;
-	}
-	frappe.confirm(__("Emitir a factura agora, com a data de hoje?"), run);
 }
 
 function preview(frm) {
@@ -146,6 +182,8 @@ function preview(frm) {
 				const money = (v) => format_currency(v, res.currency);
 				d.get_field("summary").$wrapper.html(`
 					<div class="text-muted small" style="line-height: 1.8; padding-top: 4px;">
+						${__("Nº previsto")}: <b>${frappe.utils.escape_html(res.invoice_name || "—")}</b>
+						<span title="${__("O número final é atribuído no momento da emissão.")}">(${__("série")} ${frappe.utils.escape_html(res.naming_series || "—")})</span><br>
 						${__("Emissão")}: <b>${frappe.datetime.str_to_user(res.posting_date)}</b> &nbsp;·&nbsp;
 						${__("Vencimento")}: <b>${res.due_date ? frappe.datetime.str_to_user(res.due_date) : "—"}</b><br>
 						${__("Líquido")}: ${money(res.net_total)} &nbsp;·&nbsp;
