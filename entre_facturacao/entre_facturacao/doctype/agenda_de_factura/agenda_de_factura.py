@@ -12,6 +12,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_days, cint, flt, getdate, now_datetime, strip_html, today
 
+from entre_facturacao.billing_period import set_explicit_due_date
+
 SCHEDULED = "Agendada"
 ISSUED = "Emitida"
 ERROR = "Erro"
@@ -99,7 +101,7 @@ class AgendadeFactura(Document):
 		si.set_missing_values()
 		days = cint(self.payment_days)
 		if days > 0:
-			si.due_date = add_days(si.posting_date, days)
+			set_explicit_due_date(si, add_days(si.posting_date, days))
 		if not si.get("taxes"):
 			si.set_taxes()
 		si.calculate_taxes_and_totals()

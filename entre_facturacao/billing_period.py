@@ -292,21 +292,35 @@ def apply_payment_terms(doc, reference_doc, ar):
 	In order: the Auto Repeat's Prazo de Pagamento (dias); the template
 	invoice's Payment Terms Template (ERPNext rebuilds due date and schedule
 	from it); the template invoice's gap between posting and due date.
+
+	An explicit due date (first and last cases) overrides the customer's
+	default Payment Terms Template: otherwise ERPNext loads that template on
+	save and rejects a due date later than it allows ("Due / Reference Date
+	cannot be after ...").
 	"""
+	doc.set("payment_schedule", [])
+
 	days = cint(ar.get("payment_days")) if ar else 0
 	if days > 0:
-		doc.due_date = add_days(doc.posting_date, days)
+		set_explicit_due_date(doc, add_days(doc.posting_date, days))
 		return
 
 	if reference_doc.get("payment_terms_template"):
 		doc.payment_terms_template = reference_doc.payment_terms_template
+		doc.ignore_default_payment_terms_template = 0
 		doc.due_date = None
 		return
 
 	if reference_doc.get("due_date") and reference_doc.get("posting_date"):
 		days = date_diff(reference_doc.due_date, reference_doc.posting_date)
 		if days > 0:
-			doc.due_date = add_days(doc.posting_date, days)
+			set_explicit_due_date(doc, add_days(doc.posting_date, days))
+
+
+def set_explicit_due_date(doc, due_date):
+	doc.due_date = due_date
+	doc.payment_terms_template = None
+	doc.ignore_default_payment_terms_template = 1
 
 
 def on_recurring(doc, method=None, reference_doc=None, auto_repeat_doc=None):
