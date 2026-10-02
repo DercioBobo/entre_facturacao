@@ -18,7 +18,7 @@ ERROR = "Erro"
 CANCELLED = "Cancelada"
 
 
-class AgendaDeFactura(Document):
+class AgendadeFactura(Document):
 	def validate(self):
 		before = self.get_doc_before_save()
 		if before and before.status in (ISSUED, CANCELLED):

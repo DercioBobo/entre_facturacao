@@ -1,5 +1,5 @@
 from frappe.model.document import Document
 
 
-class AgendaDeFacturaItem(Document):
+class AgendadeFacturaItem(Document):
 	pass
