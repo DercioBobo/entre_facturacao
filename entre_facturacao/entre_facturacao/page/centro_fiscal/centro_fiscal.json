@@ -1,0 +1,23 @@
+{
+ "content": null,
+ "creation": "2026-10-13 18:00:00.000000",
+ "doctype": "Page",
+ "icon": "file",
+ "modified": "2026-10-13 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "centro-fiscal",
+ "owner": "Administrator",
+ "page_name": "centro-fiscal",
+ "restrict_to_domain": "",
+ "roles": [
+  {"role": "Accounts Manager"},
+  {"role": "Accounts User"},
+  {"role": "Auditor"}
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Centro Fiscal"
+}
