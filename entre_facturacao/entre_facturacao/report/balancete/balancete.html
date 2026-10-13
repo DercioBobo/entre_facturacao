@@ -1,0 +1,65 @@
+{%
+	var fmt = function(v, moeda) { return flt(v) ? format_currency(v, moeda) : ""; };
+	var campos = ["saldo_inicial_debito", "saldo_inicial_credito", "movimento_debito", "movimento_credito",
+		"acumulado_debito", "acumulado_credito", "saldo_devedor", "saldo_credor"];
+%}
+<style>
+	.balancete td, .balancete th { font-size: 7.5pt; padding: 3px 4px !important; }
+	.balancete th { text-align: center; vertical-align: middle !important; }
+	.balancete td.valor { text-align: right; white-space: nowrap; }
+	.balancete tr.grupo td, .balancete tr.total td { font-weight: bold; }
+	.balancete tr.total td { border-top: 2px solid #000 !important; }
+	.balancete-assinaturas td { width: 50%; padding-top: 50px; text-align: center; font-size: 8pt; }
+</style>
+
+<div class="text-center" style="margin-bottom: 10px;">
+	<h4 style="margin-bottom: 4px;">{%= __("Balancete de Verificação") %}</h4>
+	<div><b>{%= filters.empresa %}</b>{% if (filters.nuit) { %} &mdash; NUIT: {%= filters.nuit %}{% } %}</div>
+	<div>
+		{%= __("Exercício") %} {%= filters.ano_fiscal %} &middot;
+		{%= __("Período") %}: {%= frappe.datetime.str_to_user(filters.data_inicio) %}
+		{%= __("a") %} {%= frappe.datetime.str_to_user(filters.data_fim) %}
+		{% if (filters.excluir_apuramento) { %} &middot; {%= __("Antes do Apuramento de Resultados") %}{% } %}
+		{% if (filters.centro_de_custo) { %} &middot; {%= __("Centro de Custo") %}: {%= filters.centro_de_custo %}{% } %}
+	</div>
+</div>
+
+<table class="table table-bordered balancete">
+	<thead>
+		<tr>
+			<th rowspan="2">{%= __("Conta") %}</th>
+			<th rowspan="2">{%= __("Designação") %}</th>
+			<th colspan="2">{%= __("Saldo Inicial") %}</th>
+			<th colspan="2">{%= __("Movimentos do Período") %}</th>
+			<th colspan="2">{%= __("Acumulado") %}</th>
+			<th colspan="2">{%= __("Saldo Final") %}</th>
+		</tr>
+		<tr>
+			<th>{%= __("Débito") %}</th><th>{%= __("Crédito") %}</th>
+			<th>{%= __("Débito") %}</th><th>{%= __("Crédito") %}</th>
+			<th>{%= __("Débito") %}</th><th>{%= __("Crédito") %}</th>
+			<th>{%= __("Devedor") %}</th><th>{%= __("Credor") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for (var i = 0, l = data.length; i < l; i++) { var r = data[i]; %}
+		<tr class="{%= r.is_total ? 'total' : (r.is_group ? 'grupo' : '') %}">
+			<td style="white-space: nowrap;">{%= r.conta %}</td>
+			<td style="padding-left: {%= 4 + (r.indent || 0) * 10 %}px !important;">{%= r.designacao %}</td>
+			{% for (var j = 0; j < campos.length; j++) { %}
+			<td class="valor">{%= fmt(r[campos[j]], r.currency) %}</td>
+			{% } %}
+		</tr>
+		{% } %}
+	</tbody>
+</table>
+
+<table class="balancete-assinaturas" style="width: 100%;">
+	<tr>
+		<td>______________________________<br>{%= __("O Contabilista Certificado") %}</td>
+		<td>______________________________<br>{%= __("A Administração") %}</td>
+	</tr>
+</table>
+<p class="text-right text-muted" style="font-size: 7pt;">
+	{%= __("Impresso em") %} {%= frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string()) %}
+</p>

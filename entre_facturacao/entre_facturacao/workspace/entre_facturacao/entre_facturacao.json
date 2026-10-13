@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"header-1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Entre Facturação</b></span>\", \"col\": 12}}, {\"id\": \"card-facturacao\", \"type\": \"card\", \"data\": {\"card_name\": \"Facturação\", \"col\": 4}}, {\"id\": \"card-configuracao\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuração\", \"col\": 4}}]",
+ "content": "[{\"id\": \"header-1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Entre Facturação</b></span>\", \"col\": 12}}, {\"id\": \"card-facturacao\", \"type\": \"card\", \"data\": {\"card_name\": \"Facturação\", \"col\": 4}}, {\"id\": \"card-contabilidade\", \"type\": \"card\", \"data\": {\"card_name\": \"Contabilidade\", \"col\": 4}}, {\"id\": \"card-configuracao\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuração\", \"col\": 4}}]",
  "creation": "2026-07-16 00:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -96,12 +96,34 @@
   },
   {
    "type": "Card Break",
+   "label": "Contabilidade",
+   "is_query_report": 0,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link",
+   "idx": 8
+  },
+  {
+   "type": "Link",
+   "label": "Balancete",
+   "link_type": "Report",
+   "link_to": "Balancete",
+   "is_query_report": 1,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link",
+   "idx": 9
+  },
+  {
+   "type": "Card Break",
    "label": "Configuração",
    "hidden": 0,
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 8,
+   "idx": 10,
    "doctype": "Workspace Link"
   },
   {
@@ -113,7 +135,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 9,
+   "idx": 11,
    "doctype": "Workspace Link"
   },
   {
@@ -125,11 +147,11 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 10,
+   "idx": 12,
    "doctype": "Workspace Link"
   }
  ],
- "modified": "2026-10-02 12:00:00.000000",
+ "modified": "2026-10-13 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Entre Facturacao",
