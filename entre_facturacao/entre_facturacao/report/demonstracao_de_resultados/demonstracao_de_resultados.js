@@ -6,6 +6,10 @@ function dr_set_nuit() {
 	});
 }
 
+// [nome, início, fim] do ano fiscal de hoje. O "year_start_date" dos defaults é o
+// do ano fiscal por omissão em Global Defaults, que pode ainda ser o do ano anterior.
+const DR_ANO_FISCAL_ACTUAL = erpnext.utils.get_fiscal_year(frappe.datetime.get_today(), true) || [];
+
 frappe.query_reports["Demonstracao de Resultados"] = {
 	filters: [
 		{
@@ -23,7 +27,7 @@ frappe.query_reports["Demonstracao de Resultados"] = {
 			fieldtype: "Link",
 			options: "Fiscal Year",
 			reqd: 1,
-			default: erpnext.utils.get_fiscal_year(frappe.datetime.get_today()),
+			default: DR_ANO_FISCAL_ACTUAL[0],
 			on_change: () => {
 				const ano_fiscal = frappe.query_report.get_filter_value("ano_fiscal");
 				if (!ano_fiscal) return;
@@ -40,7 +44,7 @@ frappe.query_reports["Demonstracao de Resultados"] = {
 			label: __("De"),
 			fieldtype: "Date",
 			reqd: 1,
-			default: frappe.defaults.get_user_default("year_start_date"),
+			default: DR_ANO_FISCAL_ACTUAL[1] || frappe.datetime.year_start(),
 		},
 		{
 			fieldname: "data_fim",
