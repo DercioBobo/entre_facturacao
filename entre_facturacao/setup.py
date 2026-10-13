@@ -23,6 +23,38 @@ CUSTOM_FIELDS = {
 			"depends_on": "eval:doc.agenda_de_factura",
 		},
 	],
+	# Classificação para o Apuramento de IVA (Modelo A); ver entre_facturacao/iva_modelo_a.py.
+	"Account": [
+		{
+			"fieldname": "iva_modelo_a",
+			"fieldtype": "Select",
+			"label": "IVA (Modelo A)",
+			"options": "\nIVA Liquidado\nIVA Dedutível\nIVA Dedutível - Importações\nIVA Regularizações",
+			"insert_after": "account_type",
+			"depends_on": "eval:!doc.is_group",
+			"description": "Como os movimentos desta conta entram no Apuramento de IVA (Modelo A).",
+		},
+	],
+	"Item Tax Template": [
+		{
+			"fieldname": "iva_campo_modelo_a",
+			"fieldtype": "Select",
+			"label": "Campo do Modelo A",
+			"options": "\n01 - Tributada\n03 - Isenta com direito a dedução\n04 - Isenta sem direito a dedução",
+			"insert_after": "company",
+			"description": "Campo da Declaração Periódica de IVA para a base das vendas de artigos com este modelo.",
+		},
+	],
+	"Sales Taxes and Charges Template": [
+		{
+			"fieldname": "iva_campo_modelo_a",
+			"fieldtype": "Select",
+			"label": "Campo do Modelo A (vendas sem IVA)",
+			"options": "\n03 - Isenta com direito a dedução\n04 - Isenta sem direito a dedução",
+			"insert_after": "tax_category",
+			"description": "Campo da Declaração Periódica de IVA para as linhas sem IVA das facturas com este modelo (ex.: exportações = 03).",
+		},
+	],
 }
 
 

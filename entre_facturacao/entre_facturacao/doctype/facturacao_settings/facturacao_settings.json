@@ -7,7 +7,11 @@
   "signature_section",
   "enable_signature_on_print",
   "demonstracao_resultados_section",
-  "linhas_demonstracao_resultados"
+  "linhas_demonstracao_resultados",
+  "balanco_section",
+  "linhas_balanco",
+  "iva_section",
+  "iva_notas_credito"
  ],
  "fields": [
   {
@@ -33,12 +37,37 @@
    "fieldtype": "Table",
    "label": "Linhas da Demonstração de Resultados",
    "options": "Linha Demonstracao Resultados"
+  },
+  {
+   "fieldname": "balanco_section",
+   "fieldtype": "Section Break",
+   "label": "Balanço"
+  },
+  {
+   "description": "Linhas do relatório Balanço e as contas de cada uma. Se ficar vazio, usa-se o modelo PGC por omissão (botão \"Carregar Modelo PGC\").",
+   "fieldname": "linhas_balanco",
+   "fieldtype": "Table",
+   "label": "Linhas do Balanço",
+   "options": "Linha Balanco"
+  },
+  {
+   "fieldname": "iva_section",
+   "fieldtype": "Section Break",
+   "label": "Apuramento de IVA"
+  },
+  {
+   "default": "Regularização (campos 09 e 10)",
+   "fieldname": "iva_notas_credito",
+   "fieldtype": "Select",
+   "label": "Notas de Crédito no Modelo A",
+   "options": "Regularização (campos 09 e 10)\nAbater nos campos de origem",
+   "description": "Regularização: o IVA das notas de crédito a clientes vai para o campo 09 e o das notas de crédito de fornecedores para o campo 10. Abater: reduzem os campos 01/02 e 05 a 07."
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-13 12:00:00.000000",
+ "modified": "2026-10-13 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Facturacao Settings",

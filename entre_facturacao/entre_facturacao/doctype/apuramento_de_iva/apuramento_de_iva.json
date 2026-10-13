@@ -1,0 +1,545 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 15:00:00.000000",
+ "default_print_format": "Modelo A IVA",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "identificacao_section",
+  "company",
+  "nuit",
+  "cae",
+  "identificacao_col_1",
+  "ano",
+  "mes",
+  "data_inicio",
+  "data_fim",
+  "identificacao_col_2",
+  "data_entrega",
+  "prazo_entrega",
+  "entrega",
+  "inexistencia_operacoes",
+  "morada_section",
+  "morada",
+  "morada_col",
+  "telefone",
+  "avisos_section",
+  "avisos",
+  "avisos_html",
+  "quadro_05_section",
+  "q5_base",
+  "campo_01",
+  "campo_03",
+  "campo_04",
+  "campo_11",
+  "q5_sp",
+  "campo_05",
+  "campo_06",
+  "campo_07",
+  "campo_08",
+  "campo_09",
+  "campo_12",
+  "campo_15",
+  "q5_estado",
+  "campo_02",
+  "campo_10",
+  "campo_13",
+  "campo_14",
+  "creditos_section",
+  "campo_16",
+  "apuramento_anterior",
+  "creditos_col",
+  "campo_17",
+  "quadro_06_section",
+  "campo_18",
+  "q6_col_1",
+  "campo_19",
+  "q6_col_2",
+  "campo_20",
+  "quadro_07_section",
+  "campo_21",
+  "q7_col_1",
+  "campo_22",
+  "q7_col_2",
+  "campo_23",
+  "ajustes_section",
+  "ajustes",
+  "documentos_section",
+  "documentos",
+  "reconciliacao_section",
+  "lancamento_apuramento",
+  "reconciliacao",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "identificacao_section",
+   "fieldtype": "Section Break",
+   "label": "Identificação (Quadros 01 a 03)"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Empresa",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "remember_last_selected_value": 1
+  },
+  {
+   "fetch_from": "company.tax_id",
+   "fieldname": "nuit",
+   "fieldtype": "Data",
+   "label": "NUIT",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cae",
+   "fieldtype": "Data",
+   "label": "Código de Actividade Económica (CAE)",
+   "description": "Preenchido com o do apuramento anterior."
+  },
+  {
+   "fieldname": "identificacao_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ano",
+   "fieldtype": "Int",
+   "label": "Ano",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "mes",
+   "fieldtype": "Select",
+   "label": "Mês",
+   "options": "Janeiro\nFevereiro\nMarço\nAbril\nMaio\nJunho\nJulho\nAgosto\nSetembro\nOutubro\nNovembro\nDezembro",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "data_inicio",
+   "fieldtype": "Date",
+   "label": "De",
+   "read_only": 1
+  },
+  {
+   "fieldname": "data_fim",
+   "fieldtype": "Date",
+   "label": "Até",
+   "read_only": 1
+  },
+  {
+   "fieldname": "identificacao_col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "data_entrega",
+   "fieldtype": "Date",
+   "label": "Data de Entrega",
+   "reqd": 1
+  },
+  {
+   "fieldname": "prazo_entrega",
+   "fieldtype": "Date",
+   "label": "Prazo de Entrega",
+   "read_only": 1,
+   "description": "Último dia do mês seguinte ao período (art. 36.º do CIVA)."
+  },
+  {
+   "fieldname": "entrega",
+   "fieldtype": "Select",
+   "label": "Entrega",
+   "options": "Dentro do Prazo\nFora do Prazo",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "inexistencia_operacoes",
+   "fieldtype": "Check",
+   "label": "Inexistência de Operações (Quadro 04)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "morada_section",
+   "fieldtype": "Section Break",
+   "label": "Morada (Quadro 03)",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "morada",
+   "fieldtype": "Small Text",
+   "label": "Morada",
+   "read_only": 1
+  },
+  {
+   "fieldname": "morada_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "telefone",
+   "fieldtype": "Data",
+   "label": "Telefone",
+   "read_only": 1
+  },
+  {
+   "fieldname": "avisos_section",
+   "fieldtype": "Section Break",
+   "label": ""
+  },
+  {
+   "fieldname": "avisos",
+   "fieldtype": "Text",
+   "label": "Avisos",
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "avisos_html",
+   "fieldtype": "HTML",
+   "label": "Avisos"
+  },
+  {
+   "fieldname": "quadro_05_section",
+   "fieldtype": "Section Break",
+   "label": "Quadro 05: Apuramento do Imposto"
+  },
+  {
+   "fieldname": "q5_base",
+   "fieldtype": "Column Break",
+   "label": "Base Tributável"
+  },
+  {
+   "fieldname": "campo_01",
+   "fieldtype": "Currency",
+   "label": "01 · Transmissões de bens e prestações de serviços (taxa normal)",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_03",
+   "fieldtype": "Currency",
+   "label": "03 · Isentas com direito a dedução (art. 18.º, n.º 1, al. b))",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_04",
+   "fieldtype": "Currency",
+   "label": "04 · Operações que não conferem direito a dedução (art. 9.º)",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_11",
+   "fieldtype": "Currency",
+   "label": "11 · Total (01 + 03 + 04)",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "q5_sp",
+   "fieldtype": "Column Break",
+   "label": "Imposto a Favor do Sujeito Passivo"
+  },
+  {
+   "fieldname": "campo_05",
+   "fieldtype": "Currency",
+   "label": "05 · Dedutível: imobilizado",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_06",
+   "fieldtype": "Currency",
+   "label": "06 · Dedutível: existências",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_07",
+   "fieldtype": "Currency",
+   "label": "07 · Dedutível: outros bens e serviços",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_08",
+   "fieldtype": "Currency",
+   "label": "08 · Dedutível nas importações",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_09",
+   "fieldtype": "Currency",
+   "label": "09 · Regularizações a favor do sujeito passivo",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_12",
+   "fieldtype": "Currency",
+   "label": "12 · Total (05 a 09)",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "campo_15",
+   "fieldtype": "Currency",
+   "label": "15 · Crédito do período (12 - 13)",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "q5_estado",
+   "fieldtype": "Column Break",
+   "label": "Imposto a Favor do Estado"
+  },
+  {
+   "fieldname": "campo_02",
+   "fieldtype": "Currency",
+   "label": "02 · IVA liquidado",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_10",
+   "fieldtype": "Currency",
+   "label": "10 · Regularizações a favor do Estado",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "campo_13",
+   "fieldtype": "Currency",
+   "label": "13 · Total (02 + 10)",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "campo_14",
+   "fieldtype": "Currency",
+   "label": "14 · Imposto do período (13 - 12)",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "creditos_section",
+   "fieldtype": "Section Break",
+   "label": "Utilização de Créditos de Períodos Anteriores",
+   "description": "Só podem ser usados se a declaração for entregue dentro do prazo."
+  },
+  {
+   "fieldname": "campo_16",
+   "fieldtype": "Currency",
+   "label": "16 · Excesso a reportar do período anterior",
+   "options": "Company:company:default_currency",
+   "description": "Preenchido com o campo 22 do apuramento submetido do mês anterior."
+  },
+  {
+   "fieldname": "apuramento_anterior",
+   "fieldtype": "Link",
+   "label": "Apuramento Anterior",
+   "options": "Apuramento de IVA",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "creditos_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "campo_17",
+   "fieldtype": "Currency",
+   "label": "17 · Créditos comunicados pelos serviços",
+   "options": "Company:company:default_currency",
+   "description": "Art. 64.º, n.º 7 do CIVA."
+  },
+  {
+   "fieldname": "quadro_06_section",
+   "fieldtype": "Section Break",
+   "label": "Quadro 06: Imposto a Entregar ao Estado"
+  },
+  {
+   "fieldname": "campo_18",
+   "fieldtype": "Currency",
+   "label": "18 · IVA (14 - 16 - 17)",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "q6_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "campo_19",
+   "fieldtype": "Currency",
+   "label": "19 · Juros de mora",
+   "options": "Company:company:default_currency",
+   "description": "Art. 37.º do CIR, conjugado com os art. 22.º e 74.º do CIVA."
+  },
+  {
+   "fieldname": "q6_col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "campo_20",
+   "fieldtype": "Currency",
+   "label": "20 · Total a pagar (18 + 19)",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "quadro_07_section",
+   "fieldtype": "Section Break",
+   "label": "Quadro 07: Imposto a Recuperar"
+  },
+  {
+   "fieldname": "campo_21",
+   "fieldtype": "Currency",
+   "label": "21 · Crédito de imposto (15 + 16 + 17 - 14)",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "q7_col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "campo_22",
+   "fieldtype": "Currency",
+   "label": "22 · Reporte para o período seguinte",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "q7_col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "campo_23",
+   "fieldtype": "Currency",
+   "label": "23 · Pedido de reembolso",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "ajustes_section",
+   "fieldtype": "Section Break",
+   "label": "Ajustes",
+   "description": "Correcções aos campos 01 a 10 que não resultam das facturas (ex.: regularizações do art. 64.º, n.º 6). Ficam registadas com a justificação."
+  },
+  {
+   "fieldname": "ajustes",
+   "fieldtype": "Table",
+   "label": "Ajustes",
+   "options": "Apuramento IVA Ajuste"
+  },
+  {
+   "fieldname": "documentos_section",
+   "fieldtype": "Section Break",
+   "label": "Documentos",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "documentos",
+   "fieldtype": "Table",
+   "label": "Documentos",
+   "options": "Apuramento IVA Documento",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "reconciliacao_section",
+   "fieldtype": "Section Break",
+   "label": "Reconciliação com a Contabilidade",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "lancamento_apuramento",
+   "fieldtype": "Link",
+   "label": "Lançamento de Apuramento",
+   "options": "Journal Entry",
+   "no_copy": 1,
+   "description": "O lançamento que transfere as contas de IVA para apuramento; é excluído da reconciliação."
+  },
+  {
+   "fieldname": "reconciliacao",
+   "fieldtype": "Table",
+   "label": "Reconciliação",
+   "options": "Apuramento IVA Conta",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Apuramento de IVA",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-13 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "Apuramento de IVA",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "print": 1,
+   "export": 1,
+   "report": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Accounts User",
+   "read": 1,
+   "print": 1,
+   "export": 1,
+   "report": 1,
+   "create": 1,
+   "write": 1,
+   "email": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "print": 1,
+   "export": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

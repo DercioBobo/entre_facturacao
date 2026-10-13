@@ -129,13 +129,37 @@
    "idx": 10
   },
   {
+   "type": "Link",
+   "label": "Balanço",
+   "link_type": "Report",
+   "link_to": "Balanco",
+   "is_query_report": 1,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link",
+   "idx": 11
+  },
+  {
+   "type": "Link",
+   "label": "Apuramento de IVA",
+   "link_type": "DocType",
+   "link_to": "Apuramento de IVA",
+   "is_query_report": 0,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link",
+   "idx": 12
+  },
+  {
    "type": "Card Break",
    "label": "Configuração",
    "hidden": 0,
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 11,
+   "idx": 13,
    "doctype": "Workspace Link"
   },
   {
@@ -147,7 +171,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 12,
+   "idx": 14,
    "doctype": "Workspace Link"
   },
   {
@@ -159,11 +183,11 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 13,
+   "idx": 15,
    "doctype": "Workspace Link"
   }
  ],
- "modified": "2026-10-13 12:30:00.000000",
+ "modified": "2026-10-13 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Entre Facturacao",

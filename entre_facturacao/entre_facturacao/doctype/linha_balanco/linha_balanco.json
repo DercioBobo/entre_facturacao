@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "designacao",
+  "tipo",
+  "grupo",
+  "total_de",
+  "contas",
+  "inclui_resultado"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "designacao",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Designação",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "default": "Contas",
+   "fieldname": "tipo",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Tipo",
+   "options": "Contas\nCabeçalho\nTotal"
+  },
+  {
+   "columns": 2,
+   "depends_on": "eval:doc.tipo === 'Contas'",
+   "description": "Activo: mostrado com o saldo devedor positivo. Capital Próprio e Passivo: saldo credor positivo.",
+   "fieldname": "grupo",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Grupo",
+   "options": "Activo\nCapital Próprio\nPassivo"
+  },
+  {
+   "columns": 2,
+   "depends_on": "eval:doc.tipo === 'Total'",
+   "fieldname": "total_de",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Total de",
+   "options": "Activo\nCapital Próprio\nPassivo\nCapital Próprio e Passivo"
+  },
+  {
+   "columns": 2,
+   "depends_on": "eval:doc.tipo === 'Contas'",
+   "description": "Prefixos dos códigos de conta, separados por vírgula. Sufixo + = só com saldo devedor, - = só com saldo credor (ex.: 44+ em Outros activos correntes e 44- em Impostos a pagar). Pontos são ignorados. Uma conta vai para a linha com o prefixo mais longo que lhe corresponda.",
+   "fieldname": "contas",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contas"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.tipo === 'Contas'",
+   "description": "Soma o resultado do exercício ainda nas contas de gastos e rendimentos (classes 6 e 7), antes do apuramento.",
+   "fieldname": "inclui_resultado",
+   "fieldtype": "Check",
+   "label": "Inclui Resultado do Exercício"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "Linha Balanco",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

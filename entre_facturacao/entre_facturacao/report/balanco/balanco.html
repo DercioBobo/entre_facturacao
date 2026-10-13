@@ -1,0 +1,49 @@
+{%
+	var fmt = function(v, moeda) { return flt(v) ? format_currency(v, moeda) : "-"; };
+%}
+<style>
+	.bal td, .bal th { font-size: 9pt; padding: 4px 6px !important; }
+	.bal th { text-align: center; }
+	.bal td.valor { text-align: right; white-space: nowrap; width: 22%; }
+	.bal tr.cabecalho td { font-weight: bold; background: #f4f4f4; }
+	.bal tr.total td { font-weight: bold; border-top: 1.5px solid #000 !important; }
+	.bal-assinaturas td { width: 50%; padding-top: 50px; text-align: center; font-size: 8pt; }
+</style>
+
+<div class="text-center" style="margin-bottom: 10px;">
+	<h4 style="margin-bottom: 4px;">{%= __("Balanço") %}</h4>
+	<div><b>{%= filters.empresa %}</b>{% if (filters.nuit) { %} &mdash; NUIT: {%= filters.nuit %}{% } %}</div>
+	<div>
+		{%= __("Exercício") %} {%= filters.ano_fiscal %} &middot;
+		{%= __("Em") %} {%= frappe.datetime.str_to_user(filters.data_fim) %}
+	</div>
+</div>
+
+<table class="table table-bordered bal">
+	<thead>
+		<tr>
+			<th>{%= __("Designação") %}</th>
+			<th>{%= __("Período n") %}</th>
+			{% if (filters.comparativo) { %}<th>{%= __("Período n-1") %}</th>{% } %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for (var i = 0, l = data.length; i < l; i++) { var r = data[i]; if (r.account) continue; %}
+		<tr class="{%= r.is_cabecalho ? 'cabecalho' : (r.is_total ? 'total' : '') %}">
+			<td style="padding-left: {%= r.is_cabecalho || r.is_total ? 6 : 18 %}px !important;">{%= r.designacao %}</td>
+			<td class="valor">{%= r.is_cabecalho ? "" : fmt(r.atual, r.currency) %}</td>
+			{% if (filters.comparativo) { %}<td class="valor">{%= r.is_cabecalho ? "" : fmt(r.anterior, r.currency) %}</td>{% } %}
+		</tr>
+		{% } %}
+	</tbody>
+</table>
+
+<table class="bal-assinaturas" style="width: 100%;">
+	<tr>
+		<td>______________________________<br>{%= __("O Contabilista Certificado") %}</td>
+		<td>______________________________<br>{%= __("A Administração") %}</td>
+	</tr>
+</table>
+<p class="text-right text-muted" style="font-size: 7pt;">
+	{%= __("Impresso em") %} {%= frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string()) %}
+</p>
