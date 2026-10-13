@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 17:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "conta",
+  "empresa",
+  "tipo"
+ ],
+ "fields": [
+  {
+   "columns": 4,
+   "fieldname": "conta",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Conta",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "conta.company",
+   "fieldname": "empresa",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Empresa",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "columns": 4,
+   "fieldname": "tipo",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Tipo",
+   "reqd": 1,
+   "options": "IVA Liquidado\nIVA Dedutível\nIVA Liquidado e Dedutível\nIVA Dedutível - Importações\nIVA Regularizações\nNão é IVA",
+   "description": "Importações: débitos vão para o campo 08. Regularizações: débitos para 09, créditos para 10. Não é IVA: conta de impostos ignorada (ex.: Imposto do Selo)."
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "IVA Conta",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -11,7 +11,13 @@
   "balanco_section",
   "linhas_balanco",
   "iva_section",
-  "iva_notas_credito"
+  "iva_notas_credito",
+  "iva_exportacao",
+  "iva_excluir_nao_dedutivel",
+  "iva_contas_section",
+  "iva_contas",
+  "iva_modelos_section",
+  "iva_modelos"
  ],
  "fields": [
   {
@@ -62,12 +68,50 @@
    "label": "Notas de Crédito no Modelo A",
    "options": "Regularização (campos 09 e 10)\nAbater nos campos de origem",
    "description": "Regularização: o IVA das notas de crédito a clientes vai para o campo 09 e o das notas de crédito de fornecedores para o campo 10. Abater: reduzem os campos 01/02 e 05 a 07."
+  },
+  {
+   "default": "1",
+   "fieldname": "iva_exportacao",
+   "fieldtype": "Check",
+   "label": "Vendas sem IVA a clientes do estrangeiro são exportações (campo 03)",
+   "description": "Cliente com morada noutro país que o da empresa. As restantes vendas sem IVA (sem modelo na tabela abaixo) vão para o campo 04."
+  },
+  {
+   "default": "1",
+   "fieldname": "iva_excluir_nao_dedutivel",
+   "fieldtype": "Check",
+   "label": "Excluir IVA não dedutível das compras",
+   "description": "Linhas de impostos com categoria \"Valuation and Total\" são IVA que vai ao custo e não entram nos campos 05 a 07."
+  },
+  {
+   "fieldname": "iva_contas_section",
+   "fieldtype": "Section Break",
+   "label": "Contas de IVA",
+   "description": "Use \"Detectar Configuração de IVA\" para preencher a partir dos modelos de impostos e reveja antes de gravar. O Apuramento de IVA usa só estas tabelas e avisa se aparecer uma conta ou modelo novo."
+  },
+  {
+   "fieldname": "iva_contas",
+   "fieldtype": "Table",
+   "label": "Contas de IVA",
+   "options": "IVA Conta"
+  },
+  {
+   "fieldname": "iva_modelos_section",
+   "fieldtype": "Section Break",
+   "label": "Modelos de Impostos (Isenções)"
+  },
+  {
+   "fieldname": "iva_modelos",
+   "fieldtype": "Table",
+   "label": "Modelos de Impostos",
+   "options": "IVA Modelo",
+   "description": "Para que campo vão as vendas com cada modelo. Item Tax Template: a base das linhas com esse modelo. Sales Taxes and Charges Template: as linhas sem IVA das facturas com esse modelo."
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-13 15:00:00.000000",
+ "modified": "2026-10-13 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Facturacao Settings",

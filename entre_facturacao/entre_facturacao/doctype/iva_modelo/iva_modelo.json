@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 17:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tipo_modelo",
+  "modelo",
+  "campo"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "tipo_modelo",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Tipo de Modelo",
+   "reqd": 1,
+   "options": "Item Tax Template\nSales Taxes and Charges Template"
+  },
+  {
+   "columns": 4,
+   "fieldname": "modelo",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Modelo",
+   "options": "tipo_modelo",
+   "reqd": 1
+  },
+  {
+   "columns": 3,
+   "fieldname": "campo",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Campo do Modelo A",
+   "reqd": 1,
+   "options": "01 - Tributada\n03 - Isenta com direito a dedução\n04 - Isenta sem direito a dedução"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "IVA Modelo",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
