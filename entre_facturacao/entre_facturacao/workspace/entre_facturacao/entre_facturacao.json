@@ -117,13 +117,25 @@
    "idx": 9
   },
   {
+   "type": "Link",
+   "label": "Demonstração de Resultados",
+   "link_type": "Report",
+   "link_to": "Demonstracao de Resultados",
+   "is_query_report": 1,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "doctype": "Workspace Link",
+   "idx": 10
+  },
+  {
    "type": "Card Break",
    "label": "Configuração",
    "hidden": 0,
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 10,
+   "idx": 11,
    "doctype": "Workspace Link"
   },
   {
@@ -135,7 +147,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 11,
+   "idx": 12,
    "doctype": "Workspace Link"
   },
   {
@@ -147,11 +159,11 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 12,
+   "idx": 13,
    "doctype": "Workspace Link"
   }
  ],
- "modified": "2026-10-13 12:00:00.000000",
+ "modified": "2026-10-13 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Entre Facturacao",

@@ -1,0 +1,50 @@
+{%
+	var fmt = function(v, moeda) { return flt(v) ? format_currency(v, moeda) : "-"; };
+%}
+<style>
+	.dr td, .dr th { font-size: 9pt; padding: 4px 6px !important; }
+	.dr th { text-align: center; }
+	.dr td.valor { text-align: right; white-space: nowrap; width: 22%; }
+	.dr tr.subtotal td { font-weight: bold; border-top: 1.5px solid #000 !important; }
+	.dr-assinaturas td { width: 50%; padding-top: 50px; text-align: center; font-size: 8pt; }
+</style>
+
+<div class="text-center" style="margin-bottom: 10px;">
+	<h4 style="margin-bottom: 4px;">{%= __("Demonstração de Resultados") %} &mdash; {%= __("Por natureza") %}</h4>
+	<div><b>{%= filters.empresa %}</b>{% if (filters.nuit) { %} &mdash; NUIT: {%= filters.nuit %}{% } %}</div>
+	<div>
+		{%= __("Exercício") %} {%= filters.ano_fiscal %} &middot;
+		{%= __("Período") %}: {%= frappe.datetime.str_to_user(filters.data_inicio) %}
+		{%= __("a") %} {%= frappe.datetime.str_to_user(filters.data_fim) %}
+		{% if (filters.centro_de_custo) { %} &middot; {%= __("Centro de Custo") %}: {%= filters.centro_de_custo %}{% } %}
+	</div>
+</div>
+
+<table class="table table-bordered dr">
+	<thead>
+		<tr>
+			<th>{%= __("Designação") %}</th>
+			<th>{%= __("Período n") %}</th>
+			{% if (filters.comparativo) { %}<th>{%= __("Período n-1") %}</th>{% } %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for (var i = 0, l = data.length; i < l; i++) { var r = data[i]; if (r.account) continue; %}
+		<tr class="{%= r.is_subtotal ? 'subtotal' : '' %}">
+			<td style="padding-left: {%= 6 + (r.indent || 0) * 16 %}px !important;">{%= r.designacao %}</td>
+			<td class="valor">{%= fmt(r.atual, r.currency) %}</td>
+			{% if (filters.comparativo) { %}<td class="valor">{%= fmt(r.anterior, r.currency) %}</td>{% } %}
+		</tr>
+		{% } %}
+	</tbody>
+</table>
+
+<table class="dr-assinaturas" style="width: 100%;">
+	<tr>
+		<td>______________________________<br>{%= __("O Contabilista Certificado") %}</td>
+		<td>______________________________<br>{%= __("A Administração") %}</td>
+	</tr>
+</table>
+<p class="text-right text-muted" style="font-size: 7pt;">
+	{%= __("Impresso em") %} {%= frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string()) %}
+</p>

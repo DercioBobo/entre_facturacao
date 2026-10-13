@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "designacao",
+  "tipo",
+  "contas"
+ ],
+ "fields": [
+  {
+   "columns": 4,
+   "fieldname": "designacao",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Designação",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "default": "Contas",
+   "description": "Subtotal: soma de todas as linhas de contas acima dele.",
+   "fieldname": "tipo",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Tipo",
+   "options": "Contas\nSubtotal"
+  },
+  {
+   "columns": 4,
+   "depends_on": "eval:doc.tipo !== 'Subtotal'",
+   "description": "Prefixos dos códigos de conta, separados por vírgula (ex.: 71, 72). Pontos são ignorados (6.2 = 62). Uma conta vai para a linha com o prefixo mais longo que lhe corresponda.",
+   "fieldname": "contas",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contas"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Entre Facturacao",
+ "name": "Linha Demonstracao Resultados",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

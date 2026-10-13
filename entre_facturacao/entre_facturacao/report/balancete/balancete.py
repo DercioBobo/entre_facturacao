@@ -151,19 +151,7 @@ def get_movimentos(filters):
 			"NOT (gle.voucher_type = 'Period Closing Voucher' AND gle.posting_date >= %(ano_inicio)s)"
 		)
 
-	if filters.centro_de_custo:
-		lft, rgt = frappe.db.get_value("Cost Center", filters.centro_de_custo, ["lft", "rgt"])
-		condicoes.append(
-			"gle.cost_center IN (SELECT name FROM `tabCost Center` WHERE lft >= %(cc_lft)s AND rgt <= %(cc_rgt)s)"
-		)
-		params.update(cc_lft=lft, cc_rgt=rgt)
-
-	livro = filters.finance_book or frappe.get_cached_value("Company", filters.empresa, "default_finance_book")
-	if livro:
-		condicoes.append("(gle.finance_book IS NULL OR gle.finance_book IN ('', %(finance_book)s))")
-		params["finance_book"] = livro
-	else:
-		condicoes.append("(gle.finance_book IS NULL OR gle.finance_book = '')")
+	condicoes += condicoes_centro_e_livro(filters, params)
 
 	return frappe.db.sql(
 		f"""
@@ -187,6 +175,26 @@ def get_movimentos(filters):
 		params,
 		as_dict=True,
 	)
+
+
+def condicoes_centro_e_livro(filters, params):
+	"""Condições sobre `tabGL Entry` gle para os filtros centro_de_custo (com os
+	centros descendentes) e finance_book (ou o livro por omissão da empresa)."""
+	condicoes = []
+	if filters.centro_de_custo:
+		lft, rgt = frappe.db.get_value("Cost Center", filters.centro_de_custo, ["lft", "rgt"])
+		condicoes.append(
+			"gle.cost_center IN (SELECT name FROM `tabCost Center` WHERE lft >= %(cc_lft)s AND rgt <= %(cc_rgt)s)"
+		)
+		params.update(cc_lft=lft, cc_rgt=rgt)
+
+	livro = filters.finance_book or frappe.get_cached_value("Company", filters.empresa, "default_finance_book")
+	if livro:
+		condicoes.append("(gle.finance_book IS NULL OR gle.finance_book IN ('', %(finance_book)s))")
+		params["finance_book"] = livro
+	else:
+		condicoes.append("(gle.finance_book IS NULL OR gle.finance_book = '')")
+	return condicoes
 
 
 def calcular_saldos(contas, movimentos, precisao):

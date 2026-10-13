@@ -5,7 +5,9 @@
  "engine": "InnoDB",
  "field_order": [
   "signature_section",
-  "enable_signature_on_print"
+  "enable_signature_on_print",
+  "demonstracao_resultados_section",
+  "linhas_demonstracao_resultados"
  ],
  "fields": [
   {
@@ -19,12 +21,24 @@
    "fieldname": "enable_signature_on_print",
    "fieldtype": "Check",
    "label": "Enable Signature on Sales Invoice Print"
+  },
+  {
+   "fieldname": "demonstracao_resultados_section",
+   "fieldtype": "Section Break",
+   "label": "Demonstração de Resultados"
+  },
+  {
+   "description": "Linhas do relatório Demonstração de Resultados (por natureza) e as contas de cada uma. Se ficar vazio, usa-se o modelo PGC por omissão (botão \"Carregar Modelo PGC\").",
+   "fieldname": "linhas_demonstracao_resultados",
+   "fieldtype": "Table",
+   "label": "Linhas da Demonstração de Resultados",
+   "options": "Linha Demonstracao Resultados"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-07-15 00:00:00.000000",
+ "modified": "2026-10-13 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Facturacao Settings",
