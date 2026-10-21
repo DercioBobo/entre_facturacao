@@ -72,7 +72,7 @@ def get_facturas(cliente, empresa=None):
 		f"""
 		SELECT si.name, si.posting_date, si.due_date, si.net_total, si.total_taxes_and_charges,
 			si.grand_total, si.outstanding_amount, si.invoice_title,
-			COALESCE(SUM(per.allocated_amount), 0) AS valor_pago
+			COALESCE(SUM(CASE WHEN pe.name IS NOT NULL THEN per.allocated_amount END), 0) AS valor_pago
 		FROM `tabSales Invoice` si
 		LEFT JOIN `tabPayment Entry Reference` per
 			ON per.reference_doctype = 'Sales Invoice' AND per.reference_name = si.name

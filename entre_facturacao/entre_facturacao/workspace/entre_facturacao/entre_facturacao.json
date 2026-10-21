@@ -95,6 +95,18 @@
    "doctype": "Workspace Link"
   },
   {
+   "type": "Link",
+   "label": "Extrato Geral de Facturas",
+   "link_type": "Report",
+   "link_to": "Extrato Geral de Facturas",
+   "is_query_report": 1,
+   "hidden": 0,
+   "onboard": 0,
+   "link_count": 0,
+   "idx": 8,
+   "doctype": "Workspace Link"
+  },
+  {
    "type": "Card Break",
    "label": "Contabilidade",
    "is_query_report": 0,
@@ -102,7 +114,7 @@
    "onboard": 0,
    "link_count": 0,
    "doctype": "Workspace Link",
-   "idx": 8
+   "idx": 9
   },
   {
    "type": "Link",
@@ -114,7 +126,7 @@
    "onboard": 0,
    "link_count": 0,
    "doctype": "Workspace Link",
-   "idx": 9
+   "idx": 10
   },
   {
    "type": "Link",
@@ -126,7 +138,7 @@
    "onboard": 0,
    "link_count": 0,
    "doctype": "Workspace Link",
-   "idx": 10
+   "idx": 11
   },
   {
    "type": "Link",
@@ -138,7 +150,7 @@
    "onboard": 0,
    "link_count": 0,
    "doctype": "Workspace Link",
-   "idx": 11
+   "idx": 12
   },
   {
    "type": "Link",
@@ -150,7 +162,7 @@
    "onboard": 0,
    "link_count": 0,
    "doctype": "Workspace Link",
-   "idx": 12
+   "idx": 13
   },
   {
    "type": "Link",
@@ -162,7 +174,7 @@
    "onboard": 0,
    "link_count": 0,
    "doctype": "Workspace Link",
-   "idx": 13
+   "idx": 14
   },
   {
    "type": "Card Break",
@@ -171,7 +183,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 14,
+   "idx": 15,
    "doctype": "Workspace Link"
   },
   {
@@ -183,7 +195,7 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 15,
+   "idx": 16,
    "doctype": "Workspace Link"
   },
   {
@@ -195,11 +207,11 @@
    "is_query_report": 0,
    "onboard": 0,
    "link_count": 0,
-   "idx": 16,
+   "idx": 17,
    "doctype": "Workspace Link"
   }
  ],
- "modified": "2026-10-13 18:00:00.000000",
+ "modified": "2026-10-21 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Entre Facturacao",
