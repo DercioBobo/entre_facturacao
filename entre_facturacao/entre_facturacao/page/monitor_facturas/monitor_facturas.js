@@ -864,12 +864,12 @@ class MonitorFacturas {
 					<div class="mf-fg">
 						<label>${__("Estado")}</label>
 						<select id="mf-sc-status">
+							<option value="Todos" selected>${__("Todos")}</option>
 							<option value="">${__("Pendentes")}</option>
 							<option value="Agendada">${__("Agendada")}</option>
 							<option value="Erro">${__("Erro")}</option>
 							<option value="Emitida">${__("Emitida")}</option>
 							<option value="Cancelada">${__("Cancelada")}</option>
-							<option value="Todos">${__("Todos")}</option>
 						</select>
 					</div>
 					<div class="mf-fg mf-fg--btns">
@@ -1162,7 +1162,7 @@ class MonitorFacturas {
 	}
 
 	_clear_scheduled() {
-		this.$body.find("#mf-sc-status").val("");
+		this.$body.find("#mf-sc-status").val("Todos");
 		this.$body.find("#mf-sc-month, #mf-sc-from, #mf-sc-to").val("");
 		this.scheduled_customer_control.set_value("");
 		this.$body.find("#mf-sc-summary, #mf-sc-tbl-wrap, #mf-sc-empty").hide();

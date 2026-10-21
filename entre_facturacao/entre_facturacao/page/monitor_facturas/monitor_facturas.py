@@ -21,7 +21,7 @@ FREQ_LABELS = {
 def _invoice_status_conditions(status, today_val):
 	statuses = [s.strip() for s in (status or "").split(",") if s.strip()]
 	if not statuses:
-		return "si.docstatus = 1", {}
+		return "si.docstatus IN (0, 1)", {}
 
 	clauses = []
 	params = {}
@@ -37,7 +37,7 @@ def _invoice_status_conditions(status, today_val):
 		clauses.append("si.docstatus = 0")
 
 	if not clauses:
-		return "si.docstatus = 1", {}
+		return "si.docstatus IN (0, 1)", {}
 	return "(" + " OR ".join(clauses) + ")", params
 
 

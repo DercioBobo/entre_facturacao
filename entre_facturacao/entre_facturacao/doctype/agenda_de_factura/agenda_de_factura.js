@@ -37,16 +37,23 @@ frappe.ui.form.on("Agenda de Factura", {
 				frm.add_custom_button(__("Ver Factura"), () =>
 					frappe.set_route("Form", "Sales Invoice", frm.doc.sales_invoice)
 				);
-				frm.dashboard.set_headline_alert(
-					__("Factura {0} emitida em {1}.", [
-						`<a href="/app/sales-invoice/${encodeURIComponent(frm.doc.sales_invoice)}">${frappe.utils.escape_html(frm.doc.sales_invoice)}</a>`,
-						frappe.datetime.str_to_user(frm.doc.issued_on),
-					]),
-					"green"
-				);
+				let msg = __("Factura {0} emitida em {1}.", [
+					`<a href="/app/sales-invoice/${encodeURIComponent(frm.doc.sales_invoice)}">${frappe.utils.escape_html(frm.doc.sales_invoice)}</a>`,
+					frappe.datetime.str_to_user(frm.doc.issued_on),
+				]);
+				if (frm.doc.auto_repeat) {
+					msg +=
+						" " +
+						__("Repetição automática {0} criada.", [
+							`<a href="/app/auto-repeat/${encodeURIComponent(frm.doc.auto_repeat)}">${frappe.utils.escape_html(frm.doc.auto_repeat)}</a>`,
+						]);
+				}
+				frm.dashboard.set_headline_alert(msg, "green");
 			}
 			return;
 		}
+
+		set_repeat_hint(frm);
 
 		if (status === "Cancelada") {
 			frm.disable_form();
@@ -88,7 +95,29 @@ frappe.ui.form.on("Agenda de Factura", {
 			frm.set_value("billing_period_end", frappe.datetime.month_end(frm.doc.billing_period_start));
 		}
 	},
+
+	scheduled_date: set_repeat_hint,
+	create_auto_repeat: set_repeat_hint,
+	repeat_frequency: set_repeat_hint,
 });
+
+const REPEAT_MONTHS = { Monthly: 1, Quarterly: 3, "Half-yearly": 6, Yearly: 12 };
+
+// Same rule as AgendadeFactura.first_repeat_date: one cycle after the
+// scheduled date, rolled past today.
+function set_repeat_hint(frm) {
+	const months = REPEAT_MONTHS[frm.doc.repeat_frequency];
+	let description = "";
+	if (frm.doc.create_auto_repeat && months && frm.doc.scheduled_date) {
+		const today = frappe.datetime.get_today();
+		let date = frm.doc.scheduled_date;
+		do {
+			date = frappe.datetime.add_months(date, months);
+		} while (date <= today);
+		description = __("Primeira factura repetida em {0} (prevista).", [frappe.datetime.str_to_user(date)]);
+	}
+	frm.set_df_property("repeat_frequency", "description", description);
+}
 
 frappe.ui.form.on("Agenda de Factura Item", {
 	qty: set_amount,

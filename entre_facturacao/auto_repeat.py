@@ -205,12 +205,41 @@ def create_auto_repeat_from_invoice(
 	if si.get("auto_repeat"):
 		frappe.throw(_("Esta factura já tem a repetição automática {0}.").format(si.auto_repeat))
 
+	if getdate(start_date) < getdate(today()):
+		frappe.throw(_("A primeira factura não pode ser anterior a hoje."))
+
+	ar = make_auto_repeat(
+		si,
+		frequency,
+		start_date,
+		end_date=end_date,
+		billing_mode=billing_mode,
+		payment_days=payment_days,
+		submit_on_creation=submit_on_creation,
+		notify_by_email=notify_by_email,
+		recipients=recipients,
+	)
+	return {"name": ar.name, "next_schedule_date": ar.next_schedule_date}
+
+
+def make_auto_repeat(
+	si,
+	frequency,
+	start_date,
+	end_date=None,
+	billing_mode=None,
+	payment_days=None,
+	submit_on_creation=0,
+	notify_by_email=0,
+	recipients=None,
+):
+	"""Insert an Auto Repeat whose first invoice is on start_date, with `si`
+	as its template. No permission checks: callers do them (the Agenda de
+	Factura job runs as Administrator)."""
 	months = FREQ_MONTHS.get(frequency)
 	if not months:
 		frappe.throw(_("Frequência inválida."))
 	first_date = getdate(start_date)
-	if first_date < getdate(today()):
-		frappe.throw(_("A primeira factura não pode ser anterior a hoje."))
 
 	ar = frappe.new_doc("Auto Repeat")
 	ar.update(
@@ -241,7 +270,7 @@ def create_auto_repeat_from_invoice(
 				ar.append("billing_descriptions", row)
 
 	ar.insert()
-	return {"name": ar.name, "next_schedule_date": ar.next_schedule_date}
+	return ar
 
 
 # Fields Frappe's AutoRepeat.set_dates derives next_schedule_date from.

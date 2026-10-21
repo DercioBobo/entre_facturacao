@@ -29,8 +29,17 @@
   "net_total",
   "total_taxes_and_charges",
   "grand_total",
+  "repeat_section",
+  "create_auto_repeat",
+  "repeat_frequency",
+  "repeat_billing_mode",
+  "column_break_repeat",
+  "repeat_end_date",
+  "repeat_notify_by_email",
+  "repeat_recipients",
   "issue_section",
   "sales_invoice",
+  "auto_repeat",
   "issued_on",
   "error_message"
  ],
@@ -198,6 +207,62 @@
   },
   {
    "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.create_auto_repeat",
+   "fieldname": "repeat_section",
+   "fieldtype": "Section Break",
+   "label": "Repetição Automática"
+  },
+  {
+   "default": "0",
+   "description": "Ao emitir a factura, cria uma Repetição Automática com ela como modelo.",
+   "fieldname": "create_auto_repeat",
+   "fieldtype": "Check",
+   "label": "Criar Repetição Automática"
+  },
+  {
+   "default": "Monthly",
+   "depends_on": "eval:doc.create_auto_repeat",
+   "fieldname": "repeat_frequency",
+   "fieldtype": "Select",
+   "label": "Frequência",
+   "mandatory_depends_on": "eval:doc.create_auto_repeat",
+   "options": "Monthly\nQuarterly\nHalf-yearly\nYearly"
+  },
+  {
+   "default": "Antecipado",
+   "depends_on": "eval:doc.create_auto_repeat",
+   "description": "Antecipado: factura o período corrente. Vencido: factura o período anterior. Vazio: título e descrições copiados sem alterações.",
+   "fieldname": "repeat_billing_mode",
+   "fieldtype": "Select",
+   "label": "Modo de Facturação",
+   "options": "\nAntecipado\nVencido"
+  },
+  {
+   "fieldname": "column_break_repeat",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.create_auto_repeat",
+   "fieldname": "repeat_end_date",
+   "fieldtype": "Date",
+   "label": "Data de Fim"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.create_auto_repeat",
+   "fieldname": "repeat_notify_by_email",
+   "fieldtype": "Check",
+   "label": "Enviar por Email"
+  },
+  {
+   "depends_on": "eval:doc.create_auto_repeat && doc.repeat_notify_by_email",
+   "fieldname": "repeat_recipients",
+   "fieldtype": "Small Text",
+   "label": "Destinatários",
+   "mandatory_depends_on": "eval:doc.create_auto_repeat && doc.repeat_notify_by_email"
+  },
+  {
+   "collapsible": 1,
    "collapsible_depends_on": "eval:doc.status != 'Agendada'",
    "fieldname": "issue_section",
    "fieldtype": "Section Break",
@@ -209,6 +274,15 @@
    "label": "Factura Emitida",
    "no_copy": 1,
    "options": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.auto_repeat",
+   "fieldname": "auto_repeat",
+   "fieldtype": "Link",
+   "label": "Repetição Automática Criada",
+   "no_copy": 1,
+   "options": "Auto Repeat",
    "read_only": 1
   },
   {
@@ -228,7 +302,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-02 18:00:00.000000",
+ "modified": "2026-10-21 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Agenda de Factura",

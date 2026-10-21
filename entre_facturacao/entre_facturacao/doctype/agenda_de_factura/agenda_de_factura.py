@@ -10,9 +10,10 @@ notifies whoever created it.
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import add_days, cint, flt, getdate, now_datetime, strip_html, today
+from frappe.utils import add_days, add_months, cint, flt, getdate, now_datetime, strip_html, today
 
-from entre_facturacao.billing_period import set_explicit_due_date
+from entre_facturacao.auto_repeat import make_auto_repeat
+from entre_facturacao.billing_period import FREQ_MONTHS, set_explicit_due_date
 
 SCHEDULED = "Agendada"
 ISSUED = "Emitida"
@@ -50,7 +51,30 @@ class AgendadeFactura(Document):
 				)
 			)
 
+		self.validate_repeat()
 		self.set_totals()
+
+	def validate_repeat(self):
+		if not cint(self.create_auto_repeat):
+			return
+		if self.repeat_frequency not in FREQ_MONTHS:
+			frappe.throw(_("Repetição Automática: indique a Frequência."))
+		if self.repeat_end_date and self.scheduled_date:
+			if getdate(self.repeat_end_date) <= getdate(self.scheduled_date):
+				frappe.throw(_("Repetição Automática: a Data de Fim tem de ser posterior à Data de Emissão."))
+		if cint(self.repeat_notify_by_email) and not (self.repeat_recipients or "").strip():
+			frappe.throw(_("Repetição Automática: indique os Destinatários do email."))
+
+	def first_repeat_date(self):
+		"""One cycle after the scheduled date (not the real issue date, so a
+		late run keeps the agreed day), rolled forward past today so the Auto
+		Repeat never fires on the day of the invoice it copies."""
+		months = FREQ_MONTHS[self.repeat_frequency]
+		date = getdate(self.scheduled_date or today())
+		while True:
+			date = getdate(add_months(date, months))
+			if date > getdate(today()):
+				return date
 
 	def on_trash(self):
 		if self.status == ISSUED:
@@ -120,10 +144,27 @@ class AgendadeFactura(Document):
 		if cint(self.submit_on_creation):
 			si.submit()
 
+		# In the same transaction: if the repeat fails, the invoice isn't
+		# issued either and the agenda goes to Erro.
+		auto_repeat = None
+		if cint(self.create_auto_repeat):
+			auto_repeat = make_auto_repeat(
+				si,
+				self.repeat_frequency,
+				self.first_repeat_date(),
+				end_date=self.repeat_end_date,
+				billing_mode=self.repeat_billing_mode,
+				payment_days=self.payment_days,
+				submit_on_creation=self.submit_on_creation,
+				notify_by_email=self.repeat_notify_by_email,
+				recipients=self.repeat_recipients,
+			).name
+
 		self.db_set(
 			{
 				"status": ISSUED,
 				"sales_invoice": si.name,
+				"auto_repeat": auto_repeat,
 				"issued_on": now_datetime(),
 				"error_message": None,
 			}
@@ -224,13 +265,12 @@ def _issue_one(name):
 		frappe.db.commit()
 		return
 
-	_notify(
-		name,
-		_("Agenda {0}: factura {1} emitida").format(name, si.name),
-		_("Cliente: {0}. Total: {1}").format(
-			si.customer_name, frappe.utils.fmt_money(si.grand_total, currency=si.currency)
-		),
+	content = _("Cliente: {0}. Total: {1}").format(
+		si.customer_name, frappe.utils.fmt_money(si.grand_total, currency=si.currency)
 	)
+	if doc.auto_repeat:
+		content += " " + _("Repetição automática {0} criada.").format(doc.auto_repeat)
+	_notify(name, _("Agenda {0}: factura {1} emitida").format(name, si.name), content)
 	frappe.db.commit()
 
 
