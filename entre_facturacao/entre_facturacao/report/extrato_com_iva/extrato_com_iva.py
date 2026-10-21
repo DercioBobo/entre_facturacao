@@ -92,7 +92,7 @@ def get_facturas(cliente, empresa=None):
 		elif getdate(r.due_date) < today_date:
 			estado = _("Vencida")
 		else:
-			estado = _("Em Dívida")
+			estado = _("A Vencer")
 
 		linhas.append(
 			{

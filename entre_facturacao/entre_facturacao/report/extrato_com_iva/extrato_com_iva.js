@@ -31,7 +31,7 @@ frappe.query_reports["Extrato com IVA"] = {
 			get_data: function (txt) {
 				const options = [
 					{ value: "Paga", description: __("Paga") },
-					{ value: "Em Dívida", description: __("Em Dívida") },
+					{ value: "A Vencer", description: __("A Vencer") },
 					{ value: "Vencida", description: __("Vencida") },
 				];
 				txt = (txt || "").toLowerCase();

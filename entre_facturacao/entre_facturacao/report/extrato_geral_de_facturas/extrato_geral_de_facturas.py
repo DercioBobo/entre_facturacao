@@ -28,6 +28,7 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{"label": _("Data"), "fieldname": "data", "fieldtype": "Date", "width": 95},
+		{"label": _("Vencimento"), "fieldname": "vencimento", "fieldtype": "Date", "width": 95},
 		{
 			"label": _("Factura"),
 			"fieldname": "factura",
@@ -35,17 +36,14 @@ def get_columns():
 			"options": "Sales Invoice",
 			"width": 120,
 		},
-		{"label": _("Série"), "fieldname": "serie", "fieldtype": "Data", "width": 110},
 		{
 			"label": _("Cliente"),
 			"fieldname": "cliente",
 			"fieldtype": "Link",
 			"options": "Customer",
-			"width": 120,
+			"width": 180,
 		},
-		{"label": _("Nome do Cliente"), "fieldname": "nome_cliente", "fieldtype": "Data", "width": 180},
 		{"label": _("Descrição"), "fieldname": "descricao", "fieldtype": "Data", "width": 200},
-		{"label": _("Vencimento"), "fieldname": "vencimento", "fieldtype": "Date", "width": 95},
 		{"label": _("Valor Líquido"), "fieldname": "valor_liquido", "fieldtype": "Currency", "width": 120},
 		{"label": _("IVA"), "fieldname": "iva", "fieldtype": "Currency", "width": 100},
 		{"label": _("Valor da Factura"), "fieldname": "valor_factura", "fieldtype": "Currency", "width": 120},
@@ -87,9 +85,6 @@ def get_facturas(filters, incluir_rascunhos=False):
 	if filters.get("cliente"):
 		conditions.append("si.customer = %(cliente)s")
 		params["cliente"] = filters["cliente"]
-	if filters.get("grupo_cliente"):
-		conditions.append("si.customer_group = %(grupo_cliente)s")
-		params["grupo_cliente"] = filters["grupo_cliente"]
 	if filters.get("data_inicio"):
 		conditions.append("si.posting_date >= %(data_inicio)s")
 		params["data_inicio"] = filters["data_inicio"]
@@ -99,7 +94,7 @@ def get_facturas(filters, incluir_rascunhos=False):
 
 	rows = frappe.db.sql(
 		f"""
-		SELECT si.name, si.docstatus, si.naming_series, si.posting_date, si.due_date, si.customer, si.customer_name,
+		SELECT si.name, si.docstatus, si.posting_date, si.due_date, si.customer,
 			si.net_total, si.total_taxes_and_charges, si.grand_total, si.outstanding_amount,
 			si.invoice_title,
 			COALESCE(SUM(CASE WHEN pe.name IS NOT NULL THEN per.allocated_amount END), 0) AS valor_pago
@@ -125,15 +120,13 @@ def get_facturas(filters, incluir_rascunhos=False):
 		elif r.due_date and getdate(r.due_date) < today_date:
 			estado = _("Vencida")
 		else:
-			estado = _("Em Dívida")
+			estado = _("A Vencer")
 
 		linhas.append(
 			{
 				"data": getdate(r.posting_date),
 				"factura": r.name,
-				"serie": r.naming_series,
 				"cliente": r.customer,
-				"nome_cliente": r.customer_name,
 				"descricao": r.invoice_title or _("Factura Nº {0}").format(r.name),
 				"vencimento": getdate(r.due_date) if r.due_date else None,
 				"valor_liquido": flt(r.net_total),
