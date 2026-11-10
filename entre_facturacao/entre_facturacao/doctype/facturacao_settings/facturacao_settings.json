@@ -9,6 +9,7 @@
   "feature_monitor_facturas",
   "feature_agenda_factura",
   "feature_pagamento_rapido",
+  "feature_factura_da_cotacao",
   "funcionalidades_column",
   "feature_periodo_facturacao",
   "feature_repeticao_automatica",
@@ -61,6 +62,13 @@
    "fieldtype": "Check",
    "label": "Pagamento Rápido",
    "description": "Botão \"Pagamento Rápido\" na factura e pagamentos (também em lote) no Monitor de Facturas."
+  },
+  {
+   "default": "1",
+   "fieldname": "feature_factura_da_cotacao",
+   "fieldtype": "Check",
+   "label": "Factura a partir da Cotação",
+   "description": "Botão Criar → Factura de Venda na cotação e Obter Itens de → Cotação na factura, sem passar pela Encomenda de Venda."
   },
   {
    "fieldname": "funcionalidades_column",
@@ -184,7 +192,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-10 13:00:00.000000",
+ "modified": "2026-11-10 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Facturacao Settings",

@@ -22,6 +22,7 @@ FEATURES = {
 	"feature_periodo_facturacao": "Período de Facturação",
 	"feature_repeticao_automatica": "Ferramentas de Repetição Automática",
 	"feature_centro_fiscal": "Centro Fiscal e Apuramento de IVA",
+	"feature_factura_da_cotacao": "Factura a partir da Cotação",
 }
 
 # O que cada funcionalidade tem no workspace (link_to dos links e atalhos).

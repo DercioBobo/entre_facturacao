@@ -24,6 +24,17 @@ CUSTOM_FIELDS = {
 			"no_copy": 1,
 			"depends_on": "eval:doc.agenda_de_factura",
 		},
+		{
+			"fieldname": "quotation",
+			"fieldtype": "Link",
+			"label": "Cotação",
+			"options": "Quotation",
+			"insert_after": "agenda_de_factura",
+			"read_only": 1,
+			"no_copy": 1,
+			"search_index": 1,
+			"depends_on": "eval:doc.quotation",
+		},
 	],
 }
 

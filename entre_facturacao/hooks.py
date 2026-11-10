@@ -16,6 +16,12 @@ app_include_js = [
 doctype_js = {
     "Sales Invoice": "public/js/sales_invoice.js",
     "Auto Repeat": "public/js/auto_repeat.js",
+    "Quotation": "public/js/quotation.js",
+}
+
+# Facturas criadas a partir da cotação aparecem nas Ligações da Cotação.
+override_doctype_dashboards = {
+    "Quotation": "entre_facturacao.quotation.get_dashboard_data",
 }
 
 doc_events = {

@@ -196,6 +196,33 @@ frappe.ui.form.on("Sales Invoice", {
 			}).addClass("btn-primary");
 		}
 
+		if (feature("feature_factura_da_cotacao") && frm.doc.docstatus === 0) {
+			frm.add_custom_button(
+				__("Quotation"),
+				() =>
+					erpnext.utils.map_current_doc({
+						method: "entre_facturacao.quotation.make_sales_invoice",
+						source_doctype: "Quotation",
+						target: frm,
+						setters: [
+							{
+								fieldtype: "Link",
+								label: __("Customer"),
+								options: "Customer",
+								fieldname: "party_name",
+								default: frm.doc.customer || undefined,
+							},
+						],
+						get_query_filters: {
+							docstatus: 1,
+							status: ["not in", ["Lost", "Ordered"]],
+							company: frm.doc.company,
+						},
+					}),
+				__("Get Items From")
+			);
+		}
+
 		if (feature("feature_periodo_facturacao") && frm.doc.docstatus === 0) {
 			frm.add_custom_button(__("Período de Facturação"), () => entre_facturacao.manual_period.open(frm));
 		}
