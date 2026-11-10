@@ -11,7 +11,8 @@ from frappe import _
 from frappe.utils import cint
 
 SETTINGS = "Facturacao Settings"
-WORKSPACE = "Entre Facturacao"
+# Workspaces da app: nome -> pasta em entre_facturacao/workspace.
+WORKSPACES = {"Entre Facturacao": "entre_facturacao", "Facturacao": "facturacao"}
 
 # fieldname em Facturação Settings -> nome mostrado nas mensagens.
 FEATURES = {
@@ -62,25 +63,38 @@ def set_defaults():
 
 
 def sync_workspace():
-	"""Reconstrói o workspace a partir do JSON da app, sem os itens das
+	"""Reconstrói os workspaces a partir do JSON da app, sem os itens das
 	funcionalidades desligadas. Corre ao gravar Facturação Settings e depois
 	de cada migrate (que repõe o JSON)."""
-	if not frappe.db.exists("Workspace", WORKSPACE):
-		return
-
-	path = os.path.join(
-		frappe.get_app_path("entre_facturacao"), "entre_facturacao", "workspace", "entre_facturacao", "entre_facturacao.json"
-	)
-	with open(path, encoding="utf-8") as f:
-		source = json.load(f)
-
 	enabled = get_enabled()
 	hidden = set()
 	for feature, items in WORKSPACE_ITEMS.items():
 		if not enabled.get(feature):
 			hidden |= items
 
-	links = [dict(l) for l in source.get("links", []) if l.get("link_to") not in hidden]
+	for name, folder in WORKSPACES.items():
+		if frappe.db.exists("Workspace", name):
+			_sync_one(name, folder, hidden)
+
+
+def _sync_one(name, folder, hidden):
+	path = os.path.join(frappe.get_app_path("entre_facturacao"), "entre_facturacao", "workspace", folder, f"{folder}.json")
+	with open(path, encoding="utf-8") as f:
+		source = json.load(f)
+
+	links = []
+	card = None
+	for l in source.get("links", []):
+		l = dict(l)
+		if l.get("type") == "Card Break":
+			card = l
+			card["link_count"] = 0
+		elif l.get("link_to") in hidden:
+			continue
+		elif card:
+			card["link_count"] += 1
+		links.append(l)
+
 	shortcuts = [dict(s) for s in source.get("shortcuts", []) if s.get("link_to") not in hidden]
 	shortcut_labels = {s.get("label") for s in shortcuts}
 	content = [
@@ -91,9 +105,9 @@ def sync_workspace():
 
 	# Sem ws.save(): em developer_mode o Workspace exportava-se por cima do
 	# JSON da app, que tem de continuar a ter todos os itens.
-	ws = frappe.get_doc("Workspace", WORKSPACE)
+	ws = frappe.get_doc("Workspace", name)
 	ws.set("links", links)
 	ws.set("shortcuts", shortcuts)
 	ws.update_children()
-	frappe.db.set_value("Workspace", WORKSPACE, "content", json.dumps(content), update_modified=False)
-	frappe.clear_document_cache("Workspace", WORKSPACE)
+	frappe.db.set_value("Workspace", name, "content", json.dumps(content), update_modified=False)
+	frappe.clear_document_cache("Workspace", name)
