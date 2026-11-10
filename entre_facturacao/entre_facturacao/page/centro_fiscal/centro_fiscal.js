@@ -1,4 +1,5 @@
 frappe.pages["centro-fiscal"].on_page_load = function (wrapper) {
+	if (!entre_facturacao.page_feature_guard(wrapper, "feature_centro_fiscal", "Centro Fiscal")) return;
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
 		title: __("Centro Fiscal"),

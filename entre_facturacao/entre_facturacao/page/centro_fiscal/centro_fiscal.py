@@ -13,10 +13,12 @@ from entre_facturacao.entre_facturacao.doctype.apuramento_de_iva.apuramento_de_i
 from entre_facturacao.entre_facturacao.report.balancete import balancete
 from entre_facturacao.entre_facturacao.report.balanco import balanco
 from entre_facturacao.entre_facturacao.report.demonstracao_de_resultados import demonstracao_de_resultados
+from entre_facturacao import features
 
 
 @frappe.whitelist()
 def get_estado(empresa, ano, mes):
+	features.check("feature_centro_fiscal")
 	ano, mes = cint(ano), cint(mes)
 	inicio = get_first_day(f"{ano}-{mes:02d}-01")
 	fim = get_last_day(inicio)

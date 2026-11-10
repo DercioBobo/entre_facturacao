@@ -36,6 +36,8 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt
 
+from entre_facturacao import features
+
 LIQUIDADO = "IVA Liquidado"
 DEDUTIVEL = "IVA Dedutível"
 AMBOS = "IVA Liquidado e Dedutível"
@@ -420,6 +422,7 @@ def detectar():
 	"""Sugestão para as tabelas de Facturação Settings, a partir dos modelos de
 	impostos e das facturas existentes, para todas as empresas. Não grava nada:
 	o formulário junta as linhas novas às que já existem e o utilizador revê."""
+	features.check("feature_centro_fiscal")
 	frappe.only_for(("Accounts Manager", "System Manager"))
 	contas, modelos = [], []
 	for empresa in frappe.get_all("Company", pluck="name"):

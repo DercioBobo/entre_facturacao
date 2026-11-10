@@ -8,6 +8,7 @@ required_apps = ["frappe", "erpnext"]
 
 # app_include_css = "/assets/entre_facturacao/css/entre_facturacao.css"
 app_include_js = [
+    "/assets/entre_facturacao/js/features.js",
     "/assets/entre_facturacao/js/quick_payment_entry.js",
     "/assets/entre_facturacao/js/auto_repeat_issue_now.js",
 ]
@@ -30,8 +31,8 @@ doc_events = {
 }
 
 # Custom fields that link to this app's own doctypes (see setup.py).
-after_install = "entre_facturacao.setup.create_custom_fields"
-after_migrate = "entre_facturacao.setup.create_custom_fields"
+after_install = "entre_facturacao.setup.after_migrate"
+after_migrate = "entre_facturacao.setup.after_migrate"
 
 extend_bootinfo = "entre_facturacao.boot.boot_session"
 

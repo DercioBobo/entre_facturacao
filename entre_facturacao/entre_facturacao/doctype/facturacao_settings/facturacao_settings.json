@@ -4,12 +4,22 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "signature_section",
+  "funcionalidades_tab",
+  "funcionalidades_section",
+  "feature_monitor_facturas",
+  "feature_agenda_factura",
+  "feature_pagamento_rapido",
+  "funcionalidades_column",
+  "feature_periodo_facturacao",
+  "feature_repeticao_automatica",
+  "feature_centro_fiscal",
   "enable_signature_on_print",
+  "relatorios_tab",
   "demonstracao_resultados_section",
   "linhas_demonstracao_resultados",
   "balanco_section",
   "linhas_balanco",
+  "iva_tab",
   "iva_section",
   "iva_notas_credito",
   "iva_exportacao",
@@ -21,16 +31,73 @@
  ],
  "fields": [
   {
-   "fieldname": "signature_section",
+   "fieldname": "funcionalidades_tab",
+   "fieldtype": "Tab Break",
+   "label": "Funcionalidades"
+  },
+  {
+   "fieldname": "funcionalidades_section",
    "fieldtype": "Section Break",
-   "label": "Signature"
+   "label": "Funcionalidades",
+   "description": "Ligue só o que este cliente usa. Os relatórios estão sempre disponíveis."
+  },
+  {
+   "default": "1",
+   "fieldname": "feature_monitor_facturas",
+   "fieldtype": "Check",
+   "label": "Monitor de Facturas",
+   "description": "Página com as facturas, as próximas facturas automáticas e as agendadas."
+  },
+  {
+   "default": "1",
+   "fieldname": "feature_agenda_factura",
+   "fieldtype": "Check",
+   "label": "Agenda de Factura",
+   "description": "Agendar a emissão de facturas para uma data. Desligado, as agendas pendentes não são emitidas."
+  },
+  {
+   "default": "1",
+   "fieldname": "feature_pagamento_rapido",
+   "fieldtype": "Check",
+   "label": "Pagamento Rápido",
+   "description": "Botão \"Pagamento Rápido\" na factura e pagamentos (também em lote) no Monitor de Facturas."
+  },
+  {
+   "fieldname": "funcionalidades_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "feature_periodo_facturacao",
+   "fieldtype": "Check",
+   "label": "Período de Facturação",
+   "description": "Modo de Facturação, modelos de título/descrições e prazo de pagamento na Repetição Automática; botão \"Período de Facturação\" na factura."
+  },
+  {
+   "default": "1",
+   "fieldname": "feature_repeticao_automatica",
+   "fieldtype": "Check",
+   "label": "Ferramentas de Repetição Automática",
+   "description": "Criar repetição a partir da factura, aviso de repetição em conflito ao submeter, \"Emitir Agora\" e \"Alterar Próxima Data\"."
+  },
+  {
+   "default": "1",
+   "fieldname": "feature_centro_fiscal",
+   "fieldtype": "Check",
+   "label": "Centro Fiscal e Apuramento de IVA",
+   "description": "Página Centro Fiscal e documento Apuramento de IVA (Modelo A)."
   },
   {
    "default": "0",
    "description": "When enabled, users can choose to print their signature (set up under User Signature) on the Sales Invoice.",
    "fieldname": "enable_signature_on_print",
    "fieldtype": "Check",
-   "label": "Enable Signature on Sales Invoice Print"
+   "label": "Assinatura na Impressão da Factura"
+  },
+  {
+   "fieldname": "relatorios_tab",
+   "fieldtype": "Tab Break",
+   "label": "Relatórios"
   },
   {
    "fieldname": "demonstracao_resultados_section",
@@ -55,6 +122,12 @@
    "fieldtype": "Table",
    "label": "Linhas do Balanço",
    "options": "Linha Balanco"
+  },
+  {
+   "fieldname": "iva_tab",
+   "fieldtype": "Tab Break",
+   "label": "IVA",
+   "depends_on": "feature_centro_fiscal"
   },
   {
    "fieldname": "iva_section",
@@ -111,7 +184,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-10-13 17:00:00.000000",
+ "modified": "2026-11-10 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Facturacao Settings",

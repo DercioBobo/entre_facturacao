@@ -183,7 +183,12 @@ entre_facturacao.invoice_repeat = {
 
 frappe.ui.form.on("Sales Invoice", {
 	refresh(frm) {
-		if (frm.doc.docstatus === 1 && flt(frm.doc.outstanding_amount) > 0) {
+		const feature = entre_facturacao.feature;
+		if (!feature("feature_periodo_facturacao")) {
+			frm.toggle_display(["billing_period_start", "billing_period_end"], false);
+		}
+
+		if (feature("feature_pagamento_rapido") && frm.doc.docstatus === 1 && flt(frm.doc.outstanding_amount) > 0) {
 			frm.add_custom_button(__("Pagamento Rápido"), () => {
 				entre_facturacao.quick_payment.open(frm.doc.name, {
 					on_done: () => frm.reload_doc(),
@@ -191,7 +196,7 @@ frappe.ui.form.on("Sales Invoice", {
 			}).addClass("btn-primary");
 		}
 
-		if (frm.doc.docstatus === 0) {
+		if (feature("feature_periodo_facturacao") && frm.doc.docstatus === 0) {
 			frm.add_custom_button(__("Período de Facturação"), () => entre_facturacao.manual_period.open(frm));
 		}
 
@@ -200,14 +205,14 @@ frappe.ui.form.on("Sales Invoice", {
 				frm.add_custom_button(__("Repetição Automática"), () =>
 					frappe.set_route("Form", "Auto Repeat", frm.doc.auto_repeat)
 				);
-			} else {
+			} else if (feature("feature_repeticao_automatica")) {
 				frm.add_custom_button(__("Repetição Automática"), () => entre_facturacao.invoice_repeat.open(frm), __("Criar"));
 			}
 		}
 	},
 
 	on_submit(frm) {
-		if (frm.doc.auto_repeat) return;
+		if (frm.doc.auto_repeat || !entre_facturacao.feature("feature_repeticao_automatica")) return;
 
 		frappe.call({
 			method: "entre_facturacao.auto_repeat.get_conflicting_auto_repeat",

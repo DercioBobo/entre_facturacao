@@ -109,9 +109,26 @@ entre_facturacao.billing_period = {
 		});
 	},
 
+	FIELDS: [
+		"billing_section",
+		"billing_mode",
+		"payment_days",
+		"billing_column_break",
+		"title_template",
+		"billing_descriptions_section",
+		"billing_variables_help",
+		"billing_descriptions",
+		"billing_preview_section",
+		"billing_preview",
+	],
+
+	enabled() {
+		return entre_facturacao.feature("feature_periodo_facturacao");
+	},
+
 	render_preview(frm) {
 		const field = frm.get_field("billing_preview");
-		if (!field) return;
+		if (!field || !this.enabled()) return;
 		if (!this.is_invoice(frm) || !frm.doc.billing_mode) {
 			field.$wrapper.empty();
 			return;
@@ -176,14 +193,23 @@ entre_facturacao.billing_period = {
 frappe.ui.form.on("Auto Repeat", {
 	refresh(frm) {
 		const bp = entre_facturacao.billing_period;
-		if (bp.is_invoice(frm)) {
+		if (!bp.enabled()) {
+			frm.toggle_display(bp.FIELDS.filter((f) => frm.get_field(f)), false);
+		}
+		if (bp.enabled() && bp.is_invoice(frm)) {
 			frm.add_custom_button(
 				__("Copiar descrições da factura modelo"),
 				() => bp.copy_from_template(frm),
 				__("Período de Facturação")
 			);
 		}
-		if (bp.is_invoice(frm) && !frm.is_new() && !frm.doc.disabled && frm.doc.next_schedule_date) {
+		if (
+			entre_facturacao.feature("feature_repeticao_automatica") &&
+			bp.is_invoice(frm) &&
+			!frm.is_new() &&
+			!frm.doc.disabled &&
+			frm.doc.next_schedule_date
+		) {
 			frm.add_custom_button(__("Emitir Agora (Antecipar)"), () =>
 				entre_facturacao.auto_repeat.issue_now(frm.doc.name, { on_done: () => frm.reload_doc() })
 			);

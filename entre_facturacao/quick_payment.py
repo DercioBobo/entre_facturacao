@@ -5,6 +5,8 @@ from frappe.utils import flt, getdate, nowdate
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import get_bank_cash_account
 
+from entre_facturacao import features
+
 
 def _get_submitted_invoice(sales_invoice):
 	if not frappe.has_permission("Sales Invoice", "read", doc=sales_invoice):
@@ -21,6 +23,7 @@ def _get_submitted_invoice(sales_invoice):
 @frappe.whitelist()
 def get_quick_payment_defaults(sales_invoice):
 	"""Minimal set of values to pre-fill the quick payment entry popup."""
+	features.check("feature_pagamento_rapido")
 	si = _get_submitted_invoice(sales_invoice)
 
 	return {
@@ -50,6 +53,7 @@ def create_quick_payment_entry(
 	handling are delegated to ERPNext's own get_payment_entry mapper so the
 	result matches what the full Payment Entry form would produce.
 	"""
+	features.check("feature_pagamento_rapido")
 	si = _get_submitted_invoice(sales_invoice)
 	if not frappe.has_permission("Payment Entry", "create"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
@@ -147,6 +151,7 @@ def get_bulk_payment_defaults(invoices):
 	"""Pre-fill data for the multi-invoice quick payment popup. All the
 	given Sales Invoices must belong to the same customer/company/currency.
 	"""
+	features.check("feature_pagamento_rapido")
 	rows = _validate_bulk_invoices(_load_invoice_list(invoices))
 	total_outstanding = flt(sum(flt(r.outstanding_amount) for r in rows), 2)
 
@@ -186,6 +191,7 @@ def create_bulk_payment_entry(
 	(it is capped against the total outstanding below, so this never
 	produces an unallocated remainder).
 	"""
+	features.check("feature_pagamento_rapido")
 	rows = _validate_bulk_invoices(_load_invoice_list(invoices))
 	if not frappe.has_permission("Payment Entry", "create"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)

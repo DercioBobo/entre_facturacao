@@ -10,6 +10,7 @@ from entre_facturacao.billing_period import (
 	period_label,
 	periods_overlap,
 )
+from entre_facturacao import features
 
 
 @frappe.whitelist()
@@ -25,6 +26,8 @@ def get_conflicting_auto_repeat(sales_invoice):
 	periods are compared; otherwise it falls back to comparing the invoice's
 	posting month with the Auto Repeat's schedule month.
 	"""
+	if not features.is_enabled("feature_repeticao_automatica"):
+		return None
 	if not frappe.has_permission("Sales Invoice", "read", doc=sales_invoice):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -81,6 +84,7 @@ def skip_auto_repeat_this_month(auto_repeat):
 	"""Push a Monthly Auto Repeat's next_schedule_date forward by one month,
 	so it doesn't also fire for a period already covered by a manual invoice.
 	"""
+	features.check("feature_repeticao_automatica")
 	doc = frappe.get_doc("Auto Repeat", auto_repeat)
 	if doc.reference_doctype != "Sales Invoice":
 		frappe.throw(_("Invalid request"))
@@ -97,6 +101,7 @@ def toggle_auto_repeat(auto_repeat, disabled):
 	"""Pause or resume a Monthly Auto Repeat from the Monitor page's
 	Próximas Facturas tab, without needing to open the raw Auto Repeat form.
 	"""
+	features.check("feature_monitor_facturas")
 	doc = frappe.get_doc("Auto Repeat", auto_repeat)
 	if doc.reference_doctype != "Sales Invoice":
 		frappe.throw(_("Invalid request"))
@@ -125,6 +130,7 @@ def _get_issuable_auto_repeat(auto_repeat, for_update=False):
 @frappe.whitelist()
 def get_issue_now_info(auto_repeat):
 	"""What issue_auto_repeat_now will do, for the confirmation dialog."""
+	features.check("feature_repeticao_automatica")
 	doc = _get_issuable_auto_repeat(auto_repeat)
 	schedule_date = getdate(doc.next_schedule_date)
 	period = period_for_schedule(schedule_date, doc.frequency, doc.billing_mode) if doc.billing_mode else None
@@ -146,6 +152,7 @@ def issue_auto_repeat_now(auto_repeat):
 	The invoice is dated today but bills the period of the date it was due
 	for (see apply_billing_period).
 	"""
+	features.check("feature_repeticao_automatica")
 	doc = _get_issuable_auto_repeat(auto_repeat, for_update=True)
 	schedule_date = getdate(doc.next_schedule_date)
 
@@ -196,6 +203,7 @@ def create_auto_repeat_from_invoice(
 	from the invoice form. With a Modo de Facturação, the title / description
 	templates are filled in from the invoice like the Auto Repeat's "Copiar
 	descrições da factura modelo" button does."""
+	features.check("feature_repeticao_automatica")
 	si = frappe.get_doc("Sales Invoice", sales_invoice)
 	si.check_permission("write")
 	if si.docstatus == 2:
@@ -315,6 +323,7 @@ def _period_info(doc, schedule_date):
 def get_next_schedule_date_info(auto_repeat, next_schedule_date=None):
 	"""For the "Alterar Próxima Data" dialog: the billed period of the
 	current and of the proposed date."""
+	features.check("feature_repeticao_automatica")
 	doc = _get_editable_auto_repeat(auto_repeat)
 	return {
 		"current_date": doc.next_schedule_date,
@@ -334,6 +343,7 @@ def set_next_schedule_date(auto_repeat, next_schedule_date, shift_following=0):
 	the 2nd again). With shift_following, the schedule itself moves so later
 	invoices follow the new date.
 	"""
+	features.check("feature_repeticao_automatica")
 	doc = _get_editable_auto_repeat(auto_repeat)
 	if doc.disabled:
 		frappe.throw(_("Esta repetição está desactivada."))

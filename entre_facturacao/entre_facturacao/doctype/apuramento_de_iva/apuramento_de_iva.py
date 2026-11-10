@@ -21,7 +21,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_months, flt, get_first_day, get_last_day, getdate
 
-from entre_facturacao import iva_modelo_a
+from entre_facturacao import features, iva_modelo_a
 
 MESES = [
 	"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -47,6 +47,7 @@ class ApuramentodeIVA(Document):
 		return MESES.index(self.mes) + 1
 
 	def validate(self):
+		features.check("feature_centro_fiscal")
 		self.definir_periodo()
 		self.validar_duplicado()
 		self.preencher_identificacao()

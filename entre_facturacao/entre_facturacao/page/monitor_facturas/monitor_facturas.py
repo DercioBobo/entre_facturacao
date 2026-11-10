@@ -7,6 +7,7 @@ from frappe.utils.pdf import get_pdf
 from frappe.utils.xlsxutils import make_xlsx
 
 from entre_facturacao.billing_period import predict_title
+from entre_facturacao import features
 
 FREQ_LABELS = {
 	"Daily": "Diária",
@@ -261,6 +262,7 @@ def _query_scheduled(from_date=None, to_date=None, customer=None, status=None, c
 @frappe.whitelist()
 def get_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
 	"""Return filtered Sales Invoice rows and summary stats."""
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	rows, summary = _query_invoices(from_date, to_date, customer, status, company)
@@ -270,6 +272,7 @@ def get_invoices(from_date=None, to_date=None, customer=None, status=None, compa
 @frappe.whitelist()
 def get_upcoming_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
 	"""Return upcoming Auto Repeat-generated Sales Invoices and summary stats."""
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	if not frappe.has_permission("Auto Repeat", "read"):
@@ -286,6 +289,8 @@ def _check_scheduled_permission():
 @frappe.whitelist()
 def get_scheduled_invoices(from_date=None, to_date=None, customer=None, status=None, company=None):
 	"""Return Agenda de Factura rows (invoices scheduled for a future date)."""
+	features.check("feature_agenda_factura")
+	features.check("feature_monitor_facturas")
 	_check_scheduled_permission()
 	rows, summary = _query_scheduled(from_date, to_date, customer, status, company)
 	return {"rows": rows, "summary": summary}
@@ -294,6 +299,8 @@ def get_scheduled_invoices(from_date=None, to_date=None, customer=None, status=N
 @frappe.whitelist()
 def get_scheduled_counts():
 	"""Pending / failed agendas, for the tab badge."""
+	features.check("feature_agenda_factura")
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Agenda de Factura", "read"):
 		return None
 	return {
@@ -305,17 +312,22 @@ def get_scheduled_counts():
 @frappe.whitelist()
 def issue_scheduled(agenda):
 	"""Emitir Agora from the Agendadas tab."""
+	features.check("feature_agenda_factura")
+	features.check("feature_monitor_facturas")
 	return frappe.get_doc("Agenda de Factura", agenda).issue_now()
 
 
 @frappe.whitelist()
 def cancel_scheduled(agenda):
+	features.check("feature_agenda_factura")
+	features.check("feature_monitor_facturas")
 	frappe.get_doc("Agenda de Factura", agenda).cancel_schedule()
 
 
 @frappe.whitelist()
 def get_default_fiscal_year(company=None):
 	"""Return the Fiscal Year whose date range contains today's actual date."""
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Fiscal Year", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
@@ -430,6 +442,7 @@ def _get_letterhead_html(letter_head=None):
 
 @frappe.whitelist()
 def get_letterhead_html(letter_head=None):
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Letter Head", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	return _get_letterhead_html(letter_head)
@@ -479,6 +492,7 @@ def _html_page(title, headers, body_rows, right_align_cols=(), letterhead_html="
 
 @frappe.whitelist()
 def export_invoices_xlsx(from_date=None, to_date=None, customer=None, status=None, company=None):
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	rows, _summary = _query_invoices(from_date, to_date, customer, status, company)
@@ -499,6 +513,7 @@ def export_invoices_pdf(
 	letter_head=None,
 	orientation=None,
 ):
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	rows, _summary = _query_invoices(from_date, to_date, customer, status, company)
@@ -514,6 +529,7 @@ def export_invoices_pdf(
 
 @frappe.whitelist()
 def export_upcoming_xlsx(from_date=None, to_date=None, customer=None, status=None, company=None):
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	if not frappe.has_permission("Auto Repeat", "read"):
@@ -536,6 +552,7 @@ def export_upcoming_pdf(
 	letter_head=None,
 	orientation=None,
 ):
+	features.check("feature_monitor_facturas")
 	if not frappe.has_permission("Sales Invoice", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	if not frappe.has_permission("Auto Repeat", "read"):
@@ -553,6 +570,8 @@ def export_upcoming_pdf(
 
 @frappe.whitelist()
 def export_scheduled_xlsx(from_date=None, to_date=None, customer=None, status=None, company=None):
+	features.check("feature_agenda_factura")
+	features.check("feature_monitor_facturas")
 	_check_scheduled_permission()
 	rows, _summary = _query_scheduled(from_date, to_date, customer, status, company)
 	xlsx_file = make_xlsx(_scheduled_table(rows), "Facturas Agendadas")
@@ -572,6 +591,8 @@ def export_scheduled_pdf(
 	letter_head=None,
 	orientation=None,
 ):
+	features.check("feature_agenda_factura")
+	features.check("feature_monitor_facturas")
 	_check_scheduled_permission()
 	rows, _summary = _query_scheduled(from_date, to_date, customer, status, company)
 	table = _scheduled_table(rows)

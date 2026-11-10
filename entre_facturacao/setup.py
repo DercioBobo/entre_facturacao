@@ -10,6 +10,8 @@ the app's doctypes exist.
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields as _create
 
+from entre_facturacao import features
+
 CUSTOM_FIELDS = {
 	"Sales Invoice": [
 		{
@@ -32,6 +34,12 @@ OBSOLETE_CUSTOM_FIELDS = [
 	"Item Tax Template-iva_campo_modelo_a",
 	"Sales Taxes and Charges Template-iva_campo_modelo_a",
 ]
+
+
+def after_migrate():
+	create_custom_fields()
+	features.set_defaults()
+	features.sync_workspace()
 
 
 def create_custom_fields():

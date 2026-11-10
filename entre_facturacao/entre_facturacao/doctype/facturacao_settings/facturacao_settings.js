@@ -66,6 +66,24 @@ frappe.ui.form.on("Facturacao Settings", {
 		Object.entries(MODELOS_PGC).forEach(([tabela, { label }]) => {
 			frm.add_custom_button(__(label), () => carregar_modelo_pgc(frm, tabela), __("Carregar Modelo PGC"));
 		});
-		frm.add_custom_button(__("Detectar Configuração de IVA"), () => detectar_configuracao_iva(frm));
+		if (frm.doc.feature_centro_fiscal) {
+			frm.add_custom_button(__("Detectar Configuração de IVA"), () => detectar_configuracao_iva(frm));
+		}
+	},
+
+	after_save(frm) {
+		const settings = (frappe.boot.entre_facturacao_settings = frappe.boot.entre_facturacao_settings || {});
+		const before = JSON.stringify(settings.features || {});
+		settings.features = {};
+		frm.meta.fields
+			.filter((df) => df.fieldname.startsWith("feature_"))
+			.forEach((df) => (settings.features[df.fieldname] = !!frm.doc[df.fieldname]));
+		settings.enable_signature_on_print = frm.doc.enable_signature_on_print;
+		if (JSON.stringify(settings.features) !== before) {
+			frappe.show_alert({
+				message: __("Funcionalidades actualizadas. Recarregue a página (Ctrl+Shift+R) para aplicar em todos os ecrãs."),
+				indicator: "green",
+			}, 8);
+		}
 	},
 });

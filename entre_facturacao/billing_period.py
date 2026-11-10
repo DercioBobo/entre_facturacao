@@ -22,6 +22,8 @@ from frappe import _
 from frappe.utils import add_days, add_months, cint, date_diff, formatdate, get_first_day, get_last_day, getdate, today
 from jinja2 import meta
 
+from entre_facturacao import features
+
 MESES = [
 	"Janeiro",
 	"Fevereiro",
@@ -327,6 +329,11 @@ def on_recurring(doc, method=None, reference_doc=None, auto_repeat_doc=None):
 	"""doc_events hook: Auto Repeat calls this on the new invoice before it is
 	inserted (and submitted, if Submit on Creation is set). Runs after
 	ERPNext's SalesInvoice.on_recurring."""
+	if not features.is_enabled("feature_periodo_facturacao"):
+		# Don't carry the template invoice's period over to the copy.
+		doc.billing_period_start = doc.billing_period_end = None
+		return
+
 	if reference_doc:
 		apply_payment_terms(doc, reference_doc, auto_repeat_doc)
 
@@ -340,6 +347,8 @@ def on_recurring(doc, method=None, reference_doc=None, auto_repeat_doc=None):
 def validate_auto_repeat(doc, method=None):
 	"""Catch template mistakes when the Auto Repeat is saved, not when the
 	invoice is generated unattended."""
+	if not features.is_enabled("feature_periodo_facturacao"):
+		return
 	if doc.reference_doctype != "Sales Invoice" or not doc.get("billing_mode"):
 		return
 
@@ -401,6 +410,7 @@ def _check_invoice_permission(name, ptype="read"):
 @frappe.whitelist()
 def preview_next_invoice(doc):
 	"""Render what the next invoice of an (unsaved) Auto Repeat will look like."""
+	features.check("feature_periodo_facturacao")
 	ar = frappe.get_doc(frappe.parse_json(doc))
 	if ar.reference_doctype != "Sales Invoice" or not ar.get("billing_mode"):
 		return None
@@ -454,6 +464,7 @@ def preview_next_invoice(doc):
 def get_template_suggestions(reference_document, frequency, billing_mode):
 	"""Build title / description templates from the template invoice by
 	turning its period mentions into placeholders."""
+	features.check("feature_periodo_facturacao")
 	_check_invoice_permission(reference_document)
 	if frequency not in FREQ_MONTHS:
 		frappe.throw(_("Escolha uma frequência Mensal, Trimestral, Semestral ou Anual."))
@@ -480,6 +491,7 @@ def get_template_suggestions(reference_document, frequency, billing_mode):
 def get_manual_period(doc, frequency, month, year):
 	"""For a manually created invoice: compute the chosen period and the
 	title / descriptions with the previous period swapped for it."""
+	features.check("feature_periodo_facturacao")
 	si = frappe.get_doc(frappe.parse_json(doc))
 	months = FREQ_MONTHS.get(frequency)
 	if not months:

@@ -14,6 +14,7 @@ from frappe.utils import add_days, add_months, cint, flt, getdate, now_datetime,
 
 from entre_facturacao.auto_repeat import make_auto_repeat
 from entre_facturacao.billing_period import FREQ_MONTHS, set_explicit_due_date
+from entre_facturacao import features
 
 SCHEDULED = "Agendada"
 ISSUED = "Emitida"
@@ -23,6 +24,7 @@ CANCELLED = "Cancelada"
 
 class AgendadeFactura(Document):
 	def validate(self):
+		features.check("feature_agenda_factura")
 		before = self.get_doc_before_save()
 		if before and before.status in (ISSUED, CANCELLED):
 			frappe.throw(_("Esta agenda está {0} e já não pode ser alterada.").format(_(before.status)))
@@ -173,12 +175,14 @@ class AgendadeFactura(Document):
 
 	@frappe.whitelist()
 	def issue_now(self):
+		features.check("feature_agenda_factura")
 		self.check_permission("write")
 		si = self.issue()
 		return si.name
 
 	@frappe.whitelist()
 	def cancel_schedule(self):
+		features.check("feature_agenda_factura")
 		self.check_permission("write")
 		if self.status not in (SCHEDULED, ERROR):
 			frappe.throw(_("Esta agenda está {0}.").format(_(self.status)))
@@ -186,6 +190,7 @@ class AgendadeFactura(Document):
 
 	@frappe.whitelist()
 	def reactivate(self):
+		features.check("feature_agenda_factura")
 		self.check_permission("write")
 		if self.status != CANCELLED:
 			frappe.throw(_("Só uma agenda cancelada pode ser reactivada."))
@@ -206,6 +211,7 @@ def invoice_naming_series():
 
 @frappe.whitelist()
 def get_invoice_naming_series():
+	features.check("feature_agenda_factura")
 	if not frappe.has_permission("Agenda de Factura", "read"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	df = frappe.get_meta("Sales Invoice").get_field("naming_series")
@@ -234,6 +240,8 @@ def predict_invoice_name(si):
 def issue_due():
 	"""Hourly: issue every agenda whose date has come. Each one is committed
 	on its own, so one failure doesn't hold back the others."""
+	if not features.is_enabled("feature_agenda_factura"):
+		return
 	names = frappe.get_all(
 		"Agenda de Factura",
 		filters={"status": SCHEDULED, "scheduled_date": ["<=", today()]},
@@ -301,6 +309,7 @@ def _notify(name, subject, content):
 def get_preview(doc, print_format=None):
 	"""Render the invoice an (unsaved) agenda will issue with a Sales Invoice
 	print format, as it would look on the scheduled date."""
+	features.check("feature_agenda_factura")
 	from frappe.www.printview import (
 		get_print_format_doc,
 		get_print_style,

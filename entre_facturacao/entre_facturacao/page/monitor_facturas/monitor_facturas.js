@@ -1,4 +1,5 @@
 frappe.pages["monitor-facturas"].on_page_load = function (wrapper) {
+	if (!entre_facturacao.page_feature_guard(wrapper, "feature_monitor_facturas", "Monitor de Facturas")) return;
 	const page = frappe.ui.make_app_page({
 		parent: wrapper,
 		title: __("Monitor de Facturas"),
@@ -22,6 +23,9 @@ class MonitorFacturas {
 		this.$body = $(page.body);
 		this._selected = new Set();
 		this._current_rows = [];
+		this._agenda = entre_facturacao.feature("feature_agenda_factura");
+		this._quick_payment = entre_facturacao.feature("feature_pagamento_rapido");
+		this._ar_tools = entre_facturacao.feature("feature_repeticao_automatica");
 		this._build();
 	}
 
@@ -32,7 +36,7 @@ class MonitorFacturas {
 			<div class="mf-tabs">
 				<button class="mf-tab-btn active" data-tab="invoices">${__("Facturas")}</button>
 				<button class="mf-tab-btn" data-tab="upcoming">${__("Próximas Facturas")}</button>
-				<button class="mf-tab-btn" data-tab="scheduled">${__("Agendadas")} <span class="mf-tab-badge" id="mf-sc-badge" style="display:none"></span></button>
+				<button class="mf-tab-btn" data-tab="scheduled"${this._agenda ? "" : ' style="display:none"'}>${__("Agendadas")} <span class="mf-tab-badge" id="mf-sc-badge" style="display:none"></span></button>
 			</div>
 			<div class="mf-panel" id="mf-panel-invoices"></div>
 			<div class="mf-panel" id="mf-panel-upcoming" style="display:none"></div>
@@ -41,9 +45,9 @@ class MonitorFacturas {
 
 		this._build_invoices_panel();
 		this._build_upcoming_panel();
-		this._build_scheduled_panel();
+		if (this._agenda) this._build_scheduled_panel();
 		this._bind_tabs();
-		this._refresh_scheduled_badge();
+		if (this._agenda) this._refresh_scheduled_badge();
 	}
 
 	_bind_tabs() {
@@ -365,7 +369,7 @@ class MonitorFacturas {
 		const payable_rows = this._selected_payable_rows();
 		const customers = new Set(payable_rows.map((r) => r.customer));
 		const $payBtn = $bar.find("#mf-sel-pay");
-		if (!payable_rows.length) {
+		if (!payable_rows.length || !this._quick_payment) {
 			$payBtn.hide();
 		} else if (customers.size === 1) {
 			$payBtn.show().prop("disabled", false).attr("title", "");
@@ -470,7 +474,7 @@ class MonitorFacturas {
 					<a href="/app/sales-invoice/${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Abrir factura")}"><i class="fa fa-fw fa-external-link"></i></a>
 					<a href="/app/query-report/Extrato%20da%20Factura?factura=${encodeURIComponent(r.invoice)}" target="_blank" class="mf-link" title="${__("Extrato da Factura")}"><i class="fa fa-fw fa-list-alt"></i></a>
 					${
-						r.display_status === "Em Dívida" || r.display_status === "Vencida"
+						this._quick_payment && (r.display_status === "Em Dívida" || r.display_status === "Vencida")
 							? `<a href="#" class="mf-link mf-link--pay mf-pay-link" data-invoice="${frappe.utils.escape_html(r.invoice)}" title="${__("Registar Pagamento")}"><i class="fa fa-fw fa-credit-card"></i></a>`
 							: ""
 					}
@@ -799,7 +803,7 @@ class MonitorFacturas {
 				<td><span class="mf-b ${BADGE[r.display_status] || ""}">${r.display_status}</span></td>
 				<td style="white-space: nowrap;">
 					${
-						r.display_status === "Activo"
+						this._ar_tools && r.display_status === "Activo"
 							? `<button class="btn btn-default btn-sm mf-toggle-btn mf-up-issue" data-auto-repeat="${frappe.utils.escape_html(r.auto_repeat)}" title="${__("Emitir hoje e passar a repetição para o ciclo seguinte")}">${__("Emitir Agora")}</button> ` +
 							  `<button class="btn btn-default btn-sm mf-toggle-btn mf-up-issue mf-up-date" data-auto-repeat="${frappe.utils.escape_html(r.auto_repeat)}" title="${__("Alterar a data da próxima factura")}">${__("Alterar Data")}</button> `
 							: ""
