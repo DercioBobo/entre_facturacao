@@ -261,7 +261,7 @@
    "idx": 20
   }
  ],
- "modified": "2026-11-10 14:00:00.000000",
+ "modified": "2026-11-10 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Facturacao",
@@ -353,5 +353,5 @@
    "idx": 7
   }
  ],
- "title": "Facturação"
+ "title": "Facturacao"
 }
