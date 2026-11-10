@@ -261,7 +261,7 @@
    "idx": 20
   }
  ],
- "modified": "2026-11-10 15:00:00.000000",
+ "modified": "2026-11-10 15:30:00.000000",
  "modified_by": "Administrator",
  "module": "Entre Facturacao",
  "name": "Facturacao",
@@ -290,8 +290,6 @@
    "color": "Blue",
    "doc_view": "List",
    "doctype": "Workspace Shortcut",
-   "stats_filter": "[[\"Sales Invoice\", \"docstatus\", \"=\", 1], [\"Sales Invoice\", \"outstanding_amount\", \">\", 0]]",
-   "format": "{} Em Dívida",
    "idx": 1
   },
   {
@@ -301,8 +299,6 @@
    "color": "Cyan",
    "doc_view": "List",
    "doctype": "Workspace Shortcut",
-   "stats_filter": "[[\"Quotation\", \"status\", \"=\", \"Open\"]]",
-   "format": "{} Abertas",
    "idx": 2
   },
   {
@@ -312,8 +308,6 @@
    "color": "Green",
    "doc_view": "List",
    "doctype": "Workspace Shortcut",
-   "stats_filter": "[[\"Payment Entry\", \"docstatus\", \"=\", 0]]",
-   "format": "{} Rascunho",
    "idx": 3
   },
   {
